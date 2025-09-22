@@ -15,7 +15,9 @@ class FeedViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-            _eventos.value = repository.getEventos()
+            repository.eventos.collect { eventosList ->
+                _eventos.value = eventosList
+            }
         }
     }
 }

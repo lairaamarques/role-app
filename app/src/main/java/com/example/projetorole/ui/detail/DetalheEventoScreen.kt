@@ -1,135 +1,252 @@
 package com.example.projetorole.ui.detail
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetorole.data.model.Evento
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetalheEventoScreen(
     evento: Evento,
+    viewModel: DetalheEventoViewModel = viewModel(),
     onBack: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text(
-                            "ROLÊ",
-                            style = MaterialTheme.typography.titleLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = Color.Black)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFE3F0FF), // azul claro
-                    titleContentColor = Color.Black
+    val isCheckedIn by viewModel.isCheckedIn.collectAsState()
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFB3C6FF))
+    ) {
+        // Placeholder da imagem do evento com seta de voltar
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(Color(0xFFE8E8E8))
+        ) {
+            // Seta de voltar no canto superior esquerdo
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Voltar",
+                    tint = Color.Black,
+                    modifier = Modifier.size(28.dp)
                 )
-            )
-        },
-        containerColor = Color.Transparent
-    ) { padding ->
+            }
+            
+            // Placeholder centralizado
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Ícone triangular grande
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(Color(0xFFB8B8B8), CircleShape)
+                )
+                
+                Spacer(Modifier.height(24.dp))
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Ícone estrela/engrenagem
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color(0xFFB8B8B8), CircleShape)
+                    )
+                    
+                    // Ícone retangular
+                    Box(
+                        modifier = Modifier
+                            .width(50.dp)
+                            .height(40.dp)
+                            .background(Color(0xFFB8B8B8), RoundedCornerShape(8.dp))
+                    )
+                }
+            }
+        }
+        
+        // Seção de informações - fundo roxo
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(Color(0xFF090040))
+                .padding(20.dp)
         ) {
-            Spacer(Modifier.height(24.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+            // Nome do evento
+            Text(
+                evento.nome,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                ),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            
+            // Data
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp)
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        evento.nome,
-                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold, color = Color.Black),
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Text(
-                        "Av. Highway to Hell, 666 - Coroado", // Endereço fixo para exemplo
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        "Amanhã - ${evento.horario}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Icon(
+                    Icons.Default.DateRange,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Hoje",
+                    color = Color.White,
+                    fontSize = 16.sp
+                )
+            }
+            
+            // Local
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Icon(
+                    Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    evento.local,
+                    color = Color.White,
+                    fontSize = 16.sp
+                )
+            }
+            
+            // Horário
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 24.dp)
+            ) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Horário",
+                    color = Color.White,
+                    fontSize = 16.sp
+                )
+            }
+            
+            // Termômetro Social com Check-ins
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF471396), RoundedCornerShape(12.dp))
+                    .padding(16.dp)
+            ) {
+                // Primeira linha: Ícone + Título + Botão
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "Termômetro Social",
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
+                    }
+                    
+                    Button(
+                        onClick = { viewModel.fazerCheckin() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isCheckedIn) Color(0xFF4CAF50) else Color(0xFF00C853)
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.height(36.dp)
                     ) {
-                        Button(
-                            onClick = { /* TODO: Check-in */ },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE3F0FF)) // azul claro
-                        ) {
-                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color.Black)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Check-in", color = Color.Black)
-                        }
-                        if (evento.pago) {
-                            Button(
-                                onClick = { /* TODO: Evento pago */ },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFE3F0)) // rosa claro
-                            ) {
-                                Text("Evento pago", color = Color.Black)
-                            }
-                        }
+                        Text(
+                            if (isCheckedIn) "✓ Feito!" else "● Bombando!",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
+                
+                Spacer(Modifier.height(12.dp))
+                
+                // Segunda linha: Check-ins count
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "${evento.checkIns}",
+                        color = Color(0xFFFFCC00),
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Check-ins",
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
+                }
             }
-            Spacer(Modifier.height(32.dp))
+            
+            Spacer(Modifier.height(24.dp))
+            
+            // Título do evento (removido o número de check-ins daqui)
             Text(
-                "Mais informações:",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = Color.Black),
-                modifier = Modifier
-                    .align(Alignment.Start)
-                    .padding(bottom = 12.dp)
+                evento.nome,
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
-            InfoRow(Icons.Filled.ShoppingCart, "Comprar ingresso", Color(0xFF6C3DD1))
-            InfoRow(Icons.Filled.Info, "De olho no movimento", Color(0xFF6C3DD1))
-            InfoRow(Icons.Filled.LocationOn, "Rota do evento", Color(0xFF6C3DD1))
+            
+            // Descrição
+            Text(
+                "Prepare o chapéu e a bota: venha para a Noite Sertaneja do Rancho Estrela!\n\nSe você ama um bom modão, dança agarradinha e aquele clima de festa do interior, não perca!",
+                color = Color.White,
+                fontSize = 14.sp,
+                lineHeight = 20.sp
+            )
         }
-    }
-}
-
-@Composable
-private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, color: Color) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(vertical = 6.dp)
-            .fillMaxWidth()
-    ) {
-        Icon(icon, contentDescription = null, tint = color)
-        Spacer(Modifier.width(10.dp))
-        Text(text, style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black))
     }
 }
