@@ -33,7 +33,6 @@ fun CuponsScreen(
             .background(Color(0xFF090040))
             .padding(24.dp)
     ) {
-        // Header
         Text(
             text = "Meus cupons",
             color = Color.White,
@@ -43,7 +42,6 @@ fun CuponsScreen(
         )
         
         if (cupons.isEmpty()) {
-            // Estado vazio
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -72,7 +70,6 @@ fun CuponsScreen(
                 }
             }
         } else {
-            // Lista de cupons
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -90,21 +87,19 @@ private fun CupomCard(cupom: Cupom) {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Ícone personalizado FORA do card - MAIOR
         Image(
             painter = painterResource(id = R.drawable.cupom_icon),
             contentDescription = "Cupom",
-            modifier = Modifier.size(60.dp) // ← AUMENTADO DE 48dp PARA 60dp
+            modifier = Modifier.size(60.dp)
         )
         
         Spacer(Modifier.width(12.dp))
         
-        // Card branco - NOVA COR
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFECE6F0) // ← NOVA COR
+                containerColor = Color(0xFFECE6F0)
             )
         ) {
             Column(
@@ -112,7 +107,6 @@ private fun CupomCard(cupom: Cupom) {
                     .fillMaxWidth()
                     .padding(12.dp)
             ) {
-                // Título
                 Text(
                     cupom.titulo,
                     color = Color.Black,
@@ -120,7 +114,6 @@ private fun CupomCard(cupom: Cupom) {
                     fontSize = 16.sp
                 )
                 
-                // Status disponível (SEM espaçamento extra)
                 if (cupom.disponivel) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
@@ -141,7 +134,6 @@ private fun CupomCard(cupom: Cupom) {
                     }
                 }
                 
-                // Local (SEM espaçamento extra)
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {

@@ -7,8 +7,8 @@ data class Evento(
     val local: String,
     val checkIns: Int,
     val nota: Double? = null,
-    val pago: Boolean = true, // ← ADICIONAR ESTE CAMPO
-    val preco: Double? = null // ← ADICIONAR ESTE CAMPO
+    val pago: Boolean = true,
+    val preco: Double? = null
 ) {
     fun getPrecoFormatado(): String {
         return if (pago && preco != null) {

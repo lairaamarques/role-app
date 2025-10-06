@@ -1,9 +1,12 @@
 package com.example.projetorole.ui.conta
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.projetorole.data.auth.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class Usuario(
     val nome: String,
@@ -20,7 +23,7 @@ data class DiaAgenda(
 )
 
 class ContaViewModel : ViewModel() {
-    
+
     private val _usuario = MutableStateFlow(
         Usuario(
             nome = "Messias Assunção",
@@ -30,7 +33,7 @@ class ContaViewModel : ViewModel() {
         )
     )
     val usuario: StateFlow<Usuario> = _usuario.asStateFlow()
-    
+
     private val _diasAgenda = MutableStateFlow(
         listOf(
             DiaAgenda(21, "DOM"),
@@ -46,4 +49,10 @@ class ContaViewModel : ViewModel() {
         )
     )
     val diasAgenda: StateFlow<List<DiaAgenda>> = _diasAgenda.asStateFlow()
+
+    fun logout() {
+        viewModelScope.launch {
+            AuthRepository.clearToken()
+        }
+    }
 }

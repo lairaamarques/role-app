@@ -17,10 +17,10 @@ fun GradientBackground(content: @Composable () -> Unit) {
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFE3F0FF), // Azul claro (header)
-                        Color(0xFFE3F0FF), // Azul claro predominante
-                        Color(0xFFE3F0FF).copy(alpha = 0.7f), // Azul claro mais translúcido
-                        Color(0xFFFFE3F0).copy(alpha = 0.45f) // Rosa claro suave na base
+                        Color(0xFFE3F0FF),
+                        Color(0xFFE3F0FF),
+                        Color(0xFFE3F0FF).copy(alpha = 0.7f),
+                        Color(0xFFFFE3F0).copy(alpha = 0.45f)
                     ),
                     startY = 0f,
                     endY = 1200f

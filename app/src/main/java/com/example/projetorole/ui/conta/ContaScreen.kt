@@ -30,63 +30,60 @@ fun ContaScreen(
 ) {
     val usuario by contaViewModel.usuario.collectAsState()
     val diasAgenda by contaViewModel.diasAgenda.collectAsState()
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF090040))
             .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally, // ← CENTRALIZADO
-        verticalArrangement = Arrangement.Center // ← CENTRALIZADO VERTICALMENTE
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        // Seção do perfil - MAIOR E CENTRALIZADA
+
         PerfilSection(usuario = usuario)
-        
-        Spacer(Modifier.height(48.dp)) // ← AUMENTADO
-        
-        // Seção de estatísticas - MAIOR
+
+        Spacer(Modifier.height(48.dp))
+
+
         EstatisticasSection(usuario = usuario)
-        
-        Spacer(Modifier.height(48.dp)) // ← AUMENTADO
-        
-        // Agenda - MAIOR
+
+        Spacer(Modifier.height(48.dp))
+
+
         AgendaSection(dias = diasAgenda)
-        
-        Spacer(Modifier.height(48.dp)) // ← AUMENTADO
-        
-        // Menu de opções - MAIOR
-        MenuSection()
+
+        Spacer(Modifier.height(48.dp))
+
+        MenuSection(onLogout = contaViewModel::logout)
     }
 }
 
 @Composable
 private fun PerfilSection(usuario: Usuario) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally // ← CENTRALIZADO
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Avatar personalizado - MAIOR
         Image(
-            painter = painterResource(id = R.drawable.avatar_placeholder), // ← IMAGEM PERSONALIZADA
+            painter = painterResource(id = R.drawable.avatar_placeholder),
             contentDescription = "Avatar",
             modifier = Modifier
-                .size(120.dp) // ← AUMENTADO DE 80dp PARA 120dp
+                .size(120.dp)
                 .clip(CircleShape)
         )
-        
+
         Spacer(Modifier.height(16.dp))
-        
-        // Nome e idade centralizados
+
         Text(
             usuario.nome,
             color = Color.White,
-            fontSize = 28.sp, // ← AUMENTADO DE 20sp PARA 28sp
+            fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
         Text(
             "${usuario.idade} anos",
             color = Color.White.copy(alpha = 0.7f),
-            fontSize = 18.sp, // ← AUMENTADO DE 14sp PARA 18sp
+            fontSize = 18.sp,
             textAlign = TextAlign.Center
         )
     }
@@ -117,14 +114,14 @@ private fun EstatisticaItem(numero: String, label: String) {
         Text(
             numero,
             color = Color(0xFFFFCC00),
-            fontSize = 48.sp, // ← AUMENTADO DE 32sp PARA 48sp
+            fontSize = 48.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
             label,
             color = Color.White,
-            fontSize = 16.sp, // ← AUMENTADO DE 12sp PARA 16sp
-            lineHeight = 18.sp, // ← AUMENTADO
+            fontSize = 16.sp,
+            lineHeight = 18.sp,
             textAlign = TextAlign.Center
         )
     }
@@ -133,18 +130,18 @@ private fun EstatisticaItem(numero: String, label: String) {
 @Composable
 private fun AgendaSection(dias: List<DiaAgenda>) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally // ← CENTRALIZADO
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             "Agenda",
             color = Color.White,
-            fontSize = 24.sp, // ← AUMENTADO DE 18sp PARA 24sp
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 20.dp) // ← AUMENTADO
+            modifier = Modifier.padding(bottom = 20.dp)
         )
-        
+
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp) // ← AUMENTADO DE 8dp PARA 12dp
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(dias) { dia ->
                 DiaAgendaCard(dia = dia)
@@ -157,28 +154,28 @@ private fun AgendaSection(dias: List<DiaAgenda>) {
 private fun DiaAgendaCard(dia: DiaAgenda) {
     Card(
         modifier = Modifier
-            .width(60.dp) // ← AUMENTADO DE 50dp PARA 60dp
-            .height(80.dp), // ← AUMENTADO DE 70dp PARA 80dp
+            .width(60.dp)
+            .height(80.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFCC00))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(6.dp), // ← AUMENTADO DE 4dp PARA 6dp
+                .padding(6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Text(
                 dia.dia.toString(),
                 color = Color.Black,
-                fontSize = 22.sp, // ← AUMENTADO DE 18sp PARA 22sp
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 dia.diaSemana,
                 color = Color.Black,
-                fontSize = 12.sp, // ← AUMENTADO DE 10sp PARA 12sp
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -186,10 +183,10 @@ private fun DiaAgendaCard(dia: DiaAgenda) {
 }
 
 @Composable
-private fun MenuSection() {
+private fun MenuSection(onLogout: () -> Unit) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(24.dp), // ← AUMENTADO DE 16dp PARA 24dp
-        horizontalAlignment = Alignment.CenterHorizontally // ← CENTRALIZADO
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         MenuItem(
             icon = Icons.Default.Favorite,
@@ -199,6 +196,20 @@ private fun MenuSection() {
             icon = Icons.Default.Info,
             text = "Minhas informações"
         )
+        Button(
+            onClick = onLogout,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF471396)),
+            modifier = Modifier.fillMaxWidth(0.6f)
+        ) {
+            Icon(
+                Icons.Default.ExitToApp,
+                contentDescription = "Sair",
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Sair", color = Color.White)
+        }
     }
 }
 
@@ -211,13 +222,13 @@ private fun MenuItem(icon: ImageVector, text: String) {
             icon,
             contentDescription = text,
             tint = Color.White,
-            modifier = Modifier.size(32.dp) // ← AUMENTADO DE 24dp PARA 32dp
+            modifier = Modifier.size(32.dp)
         )
-        Spacer(Modifier.width(20.dp)) // ← AUMENTADO DE 16dp PARA 20dp
+        Spacer(Modifier.width(20.dp))
         Text(
             text,
             color = Color.White,
-            fontSize = 20.sp // ← AUMENTADO DE 16sp PARA 20sp
+            fontSize = 20.sp
         )
     }
 }

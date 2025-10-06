@@ -26,9 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projetorole.data.model.Evento
-import com.example.projetorole.ui.salvos.CheckinsSalvosViewModel // ← ATUALIZADO
+import com.example.projetorole.ui.salvos.CheckinsSalvosViewModel
 
-// Mock de categorias expandido para demonstrar scroll
 private val categorias = listOf(
     "Ocorrendo hoje",
     "Bares",
@@ -45,9 +44,8 @@ private val categorias = listOf(
 @Composable
 fun FeedScreen(
     onEventoClick: (Evento) -> Unit = {},
-    checkinsSalvosViewModel: CheckinsSalvosViewModel = viewModel() // ← ATUALIZADO
+    checkinsSalvosViewModel: CheckinsSalvosViewModel = viewModel()
 ) {
-    // Usar ViewModel para dados consistentes
     val viewModel: FeedViewModel = viewModel()
     val eventos by viewModel.eventos.collectAsState()
 
@@ -59,7 +57,6 @@ fun FeedScreen(
             .fillMaxSize()
             .background(Color(0xFF090040))
     ) {
-        // Localização
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -89,14 +86,13 @@ fun FeedScreen(
             }
         }
 
-        // Barra de busca - corrigida para mostrar placeholder e texto
         OutlinedTextField(
             value = textoBusca,
             onValueChange = { textoBusca = it },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .defaultMinSize(minHeight = 37.dp), // ← Altura mínima em vez de fixa
+                .defaultMinSize(minHeight = 37.dp),
             placeholder = {
                 Text(
                     "Buscar rolê",
@@ -113,7 +109,7 @@ fun FeedScreen(
                 )
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.Transparent, // ← Remove borda para parecer mais baixo
+                focusedBorderColor = Color.Transparent,
                 unfocusedBorderColor = Color.Transparent,
                 focusedTextColor = Color(0xFFFEF7FF),
                 unfocusedTextColor = Color(0xFFFEF7FF),
@@ -126,10 +122,9 @@ fun FeedScreen(
             textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
         )
 
-        // Espaçamento aumentado entre busca e categorias (igual ao do feed)
         Spacer(Modifier.height(16.dp))
 
-        // Categorias com scroll horizontal
+
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 24.dp),
@@ -165,10 +160,8 @@ fun FeedScreen(
             }
         }
 
-        // Espaçamento igual ao que estava antes (16.dp)
         Spacer(Modifier.height(16.dp))
 
-        // Feed de eventos
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -176,7 +169,6 @@ fun FeedScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Filtrar eventos baseado na busca
             val eventosFiltrados = if (textoBusca.isBlank()) {
                 eventos
             } else {
@@ -190,7 +182,7 @@ fun FeedScreen(
                 EventoCard(
                     evento = evento, 
                     onClick = { onEventoClick(evento) },
-                    checkinsSalvosViewModel = checkinsSalvosViewModel // ← ATUALIZADO
+                    checkinsSalvosViewModel = checkinsSalvosViewModel
                 )
             }
         }
@@ -218,7 +210,6 @@ private fun EventoCard(
                 .fillMaxWidth()
                 .height(130.dp)
         ) {
-            // Placeholder da imagem
             Box(
                 modifier = Modifier
                     .width(90.dp)
@@ -261,7 +252,6 @@ private fun EventoCard(
                 }
             }
 
-            // Conteúdo do evento
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -269,9 +259,7 @@ private fun EventoCard(
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // SEÇÃO SUPERIOR - Título mais próximo da borda
                 Column {
-                    // Título com ícone de favorito
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -286,7 +274,6 @@ private fun EventoCard(
                             maxLines = 1
                         )
                         
-                        // Ícone de favorito
                         IconButton(
                             onClick = { checkinsSalvosViewModel.toggleSalvarCheckin(evento.id) },
                             modifier = Modifier.size(20.dp)
@@ -300,10 +287,9 @@ private fun EventoCard(
                         }
                     }
 
-                    // Local - LINHA SEPARADA (SEM ESPAÇAMENTO)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.LocationOn, // ← MUDADO DE Place PARA LocationOn
+                            imageVector = Icons.Default.LocationOn,
                             contentDescription = null,
                             tint = Color(0xFFFEF7FF),
                             modifier = Modifier.size(10.dp)
@@ -318,7 +304,6 @@ private fun EventoCard(
                         )
                     }
 
-                    // Data e horário - LINHA SEPARADA ABAIXO DO LOCAL (SEM ESPAÇAMENTO)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.DateRange,
@@ -335,22 +320,20 @@ private fun EventoCard(
                     }
                 }
 
-                // SEÇÃO INFERIOR - Preço e Check-ins
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Preço - BOX COM LARGURA FIXA PARA AMBOS OS CASOS
                     Box(
                         modifier = Modifier
-                            .width(70.dp) // ← LARGURA FIXA PARA UNIFORMIZAR
+                            .width(70.dp)
                             .background(
                                 if (evento.pago) Color(0xFFFFCC00) else Color(0xFF4CAF50),
                                 RoundedCornerShape(6.dp)
                             )
-                            .padding(vertical = 4.dp), // ← APENAS PADDING VERTICAL
-                        contentAlignment = Alignment.Center // ← CENTRALIZADO
+                            .padding(vertical = 4.dp),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = evento.getPrecoFormatado(),
@@ -360,7 +343,6 @@ private fun EventoCard(
                         )
                     }
 
-                    // Check-ins
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "${evento.checkIns}",

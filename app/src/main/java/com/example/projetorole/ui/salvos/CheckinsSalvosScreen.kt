@@ -33,7 +33,6 @@ fun CheckinsSalvosScreen(
     val checkinsSalvos by checkinsSalvosViewModel.checkinsSalvos.collectAsState()
     val eventos by feedViewModel.eventos.collectAsState()
     
-    // Filtrar eventos que estão salvos
     val checkinsSalvosFiltrados = eventos.filter { evento ->
         checkinsSalvos.any { it.eventoId == evento.id }
     }
@@ -44,7 +43,6 @@ fun CheckinsSalvosScreen(
             .background(Color(0xFF090040))
             .padding(24.dp)
     ) {
-        // Header
         Text(
             text = "Check-ins salvos",
             color = Color.White,
@@ -61,7 +59,6 @@ fun CheckinsSalvosScreen(
         )
         
         if (checkinsSalvosFiltrados.isEmpty()) {
-            // Estado vazio
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -90,7 +87,6 @@ fun CheckinsSalvosScreen(
                 }
             }
         } else {
-            // Lista de check-ins salvos
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -116,16 +112,14 @@ private fun CheckinSalvoCard(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Ícone personalizado FORA do card
         Image(
-            painter = painterResource(id = R.drawable.favorite_icon), // ← ÍCONE PERSONALIZADO
+            painter = painterResource(id = R.drawable.favorite_icon),
             contentDescription = "Favorito",
-            modifier = Modifier.size(60.dp) // ← MESMO TAMANHO DO CARD
+            modifier = Modifier.size(60.dp)
         )
         
-        Spacer(Modifier.width(12.dp)) // ← ESPAÇO ENTRE ÍCONE E CARD
+        Spacer(Modifier.width(12.dp))
         
-        // Card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -136,14 +130,12 @@ private fun CheckinSalvoCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp), // ← PADDING REDUZIDO
+                    .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Informações do evento
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    // Apenas o nome (SEM PREÇO)
                     Text(
                         evento.nome,
                         color = Color.Black,
@@ -151,7 +143,6 @@ private fun CheckinSalvoCard(
                         fontSize = 16.sp
                     )
                     
-                    // Local embaixo (SEM espaçamento extra)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Default.LocationOn,
@@ -167,7 +158,6 @@ private fun CheckinSalvoCard(
                         )
                     }
                     
-                    // Data embaixo do local (SEM espaçamento extra)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Default.DateRange,
@@ -184,7 +174,6 @@ private fun CheckinSalvoCard(
                     }
                 }
                 
-                // Ícone de lixeira para excluir
                 IconButton(onClick = onRemove) {
                     Icon(
                         Icons.Default.Delete,

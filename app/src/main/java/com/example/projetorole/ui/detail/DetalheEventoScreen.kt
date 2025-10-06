@@ -31,14 +31,12 @@ fun DetalheEventoScreen(
             .fillMaxSize()
             .background(Color(0xFFB3C6FF))
     ) {
-        // Placeholder da imagem do evento com seta de voltar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
                 .background(Color(0xFFE8E8E8))
         ) {
-            // Seta de voltar no canto superior esquerdo
             IconButton(
                 onClick = onBack,
                 modifier = Modifier
@@ -53,13 +51,11 @@ fun DetalheEventoScreen(
                 )
             }
             
-            // Placeholder centralizado
             Column(
                 modifier = Modifier.align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Ícone triangular grande
                 Box(
                     modifier = Modifier
                         .size(60.dp)
@@ -71,14 +67,12 @@ fun DetalheEventoScreen(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Ícone estrela/engrenagem
                     Box(
                         modifier = Modifier
                             .size(40.dp)
                             .background(Color(0xFFB8B8B8), CircleShape)
                     )
                     
-                    // Ícone retangular
                     Box(
                         modifier = Modifier
                             .width(50.dp)
@@ -89,14 +83,12 @@ fun DetalheEventoScreen(
             }
         }
         
-        // Seção de informações - fundo roxo
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF090040))
                 .padding(20.dp)
         ) {
-            // Nome do evento
             Text(
                 evento.nome,
                 style = MaterialTheme.typography.headlineSmall.copy(
@@ -106,7 +98,6 @@ fun DetalheEventoScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             
-            // Data
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -125,7 +116,6 @@ fun DetalheEventoScreen(
                 )
             }
             
-            // Local
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -144,7 +134,6 @@ fun DetalheEventoScreen(
                 )
             }
             
-            // Horário
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -163,14 +152,12 @@ fun DetalheEventoScreen(
                 )
             }
             
-            // Termômetro Social com Check-ins
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFF471396), RoundedCornerShape(12.dp))
                     .padding(16.dp)
             ) {
-                // Primeira linha: Ícone + Título + Botão
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -210,7 +197,6 @@ fun DetalheEventoScreen(
                 
                 Spacer(Modifier.height(12.dp))
                 
-                // Segunda linha: Check-ins count
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -231,7 +217,6 @@ fun DetalheEventoScreen(
             
             Spacer(Modifier.height(24.dp))
             
-            // Título do evento (removido o número de check-ins daqui)
             Text(
                 evento.nome,
                 color = Color.White,
@@ -240,7 +225,6 @@ fun DetalheEventoScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             
-            // Descrição
             Text(
                 "Prepare o chapéu e a bota: venha para a Noite Sertaneja do Rancho Estrela!\n\nSe você ama um bom modão, dança agarradinha e aquele clima de festa do interior, não perca!",
                 color = Color.White,

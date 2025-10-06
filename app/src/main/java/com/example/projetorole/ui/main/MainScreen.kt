@@ -25,7 +25,6 @@ fun MainScreen(
     val currentRoute = navBackStackEntry?.destination?.route
     
     Box(modifier = Modifier.fillMaxSize()) {
-        // Conteúdo das telas (com padding para o bottom bar)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -34,7 +33,6 @@ fun MainScreen(
             content()
         }
         
-        // Bottom Bar fixo
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -49,7 +47,7 @@ fun MainScreen(
                     }
                 },
                 onCuponsClick = {
-                    navController.navigate("cupons") // ← ATUALIZADO
+                    navController.navigate("cupons")
                 },
                 onCheckinClick = { 
                     navController.navigate("checkin") 
@@ -90,14 +88,14 @@ private fun BottomBar(
                 onClick = onHomeClick
             )
             BottomBarButton(
-                icon = Icons.Default.Star, // ← MUDADO DE LocalOffer PARA Star
+                icon = Icons.Default.Star,
                 label = "Cupons",
                 isSelected = currentRoute == "cupons",
                 onClick = onCuponsClick
             )
             BottomBarButton(
-                icon = Icons.Default.Favorite, // ← MUDADO DE CheckCircle PARA Favorite
-                label = "Check-In", // ← MANTIDO
+                icon = Icons.Default.Favorite,
+                label = "Check-In",
                 isSelected = currentRoute == "checkin",
                 onClick = onCheckinClick
             )

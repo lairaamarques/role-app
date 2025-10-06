@@ -3,21 +3,16 @@ package com.example.projetorole.ui.feed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projetorole.data.model.Evento
-import com.example.projetorole.data.repository.EventoRepositoryMock
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.projetorole.data.repository.EventoRepository
+import com.example.projetorole.repository.EventoNetworkRepository
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
 
-class FeedViewModel : ViewModel() {
-    private val repository = EventoRepositoryMock()
-    private val _eventos = MutableStateFlow<List<Evento>>(emptyList())
-    val eventos: StateFlow<List<Evento>> = _eventos
+class FeedViewModel(
+    private val repository: EventoRepository = EventoNetworkRepository()
+) : ViewModel() {
 
-    init {
-        viewModelScope.launch {
-            repository.eventos.collect { eventosList ->
-                _eventos.value = eventosList
-            }
-        }
-    }
+    val eventos: StateFlow<List<Evento>> = repository.eventos
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }

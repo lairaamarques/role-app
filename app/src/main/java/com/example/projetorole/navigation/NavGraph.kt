@@ -15,78 +15,112 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.projetorole.ui.main.MainScreen
+import com.example.projetorole.data.auth.AuthRepository
+import com.example.projetorole.ui.auth.LoginScreen
+import com.example.projetorole.ui.auth.RegisterScreen
+import com.example.projetorole.ui.cupons.CuponsScreen
+import com.example.projetorole.ui.detail.DetalheEventoScreen
 import com.example.projetorole.ui.feed.FeedScreen
 import com.example.projetorole.ui.feed.FeedViewModel
-import com.example.projetorole.ui.detail.DetalheEventoScreen
+import com.example.projetorole.ui.main.MainScreen
 import com.example.projetorole.ui.salvos.CheckinsSalvosScreen
 import com.example.projetorole.ui.salvos.CheckinsSalvosViewModel
-import com.example.projetorole.ui.cupons.CuponsScreen
 import com.example.projetorole.ui.conta.ContaScreen
 
 @Composable
 fun NavGraph() {
-    val navController = rememberNavController()
-    
-    // ViewModels compartilhados
-    val feedViewModel: FeedViewModel = viewModel()
-    val checkinsSalvosViewModel: CheckinsSalvosViewModel = viewModel()
-    val eventos by feedViewModel.eventos.collectAsState()
-    
-    MainScreen(navController = navController) {
-        NavHost(
-            navController = navController,
-            startDestination = "feed"
-        ) {
-            composable("feed") {
-                FeedScreen(
-                    onEventoClick = { evento ->
-                        navController.navigate("detail/${evento.id}")
-                    },
-                    checkinsSalvosViewModel = checkinsSalvosViewModel
-                )
+    val token by AuthRepository.token.collectAsState()
+
+    LaunchedEffect(Unit) {
+        AuthRepository.authEvents.collect { event ->
+            when (event) {
+                AuthRepository.AuthEvent.Unauthorized -> AuthRepository.clearToken()
             }
-            
-            composable(
-                "detail/{eventoId}",
-                arguments = listOf(navArgument("eventoId") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val eventoId = backStackEntry.arguments?.getInt("eventoId") ?: 0
-                
-                val evento = eventos.find { it.id == eventoId }
-                
-                if (evento != null) {
-                    DetalheEventoScreen(
-                        evento = evento,
-                        onBack = { navController.popBackStack() }
+        }
+    }
+
+    if (token.isNullOrBlank()) {
+        AuthNavHost()
+    } else {
+        val navController = rememberNavController()
+        val feedViewModel: FeedViewModel = viewModel()
+        val checkinsSalvosViewModel: CheckinsSalvosViewModel = viewModel()
+        val eventos by feedViewModel.eventos.collectAsState()
+
+        MainScreen(navController = navController) {
+            NavHost(
+                navController = navController,
+                startDestination = "feed"
+            ) {
+                composable("feed") {
+                    FeedScreen(
+                        onEventoClick = { evento ->
+                            navController.navigate("detail/${evento.id}")
+                        },
+                        checkinsSalvosViewModel = checkinsSalvosViewModel
                     )
-                } else {
-                    PlaceholderScreen("Evento não encontrado")
+                }
+
+                composable(
+                    "detail/{eventoId}",
+                    arguments = listOf(navArgument("eventoId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val eventoId = backStackEntry.arguments?.getInt("eventoId") ?: 0
+                    val evento = eventos.find { it.id == eventoId }
+
+                    if (evento != null) {
+                        DetalheEventoScreen(
+                            evento = evento,
+                            onBack = { navController.popBackStack() }
+                        )
+                    } else {
+                        PlaceholderScreen("Evento não encontrado")
+                    }
+                }
+
+                composable("checkin") {
+                    CheckinsSalvosScreen(
+                        onEventoClick = { evento ->
+                            navController.navigate("detail/${evento.id}")
+                        },
+                        checkinsSalvosViewModel = checkinsSalvosViewModel,
+                        feedViewModel = feedViewModel
+                    )
+                }
+
+                composable("search") {
+                    PlaceholderScreen("Buscar")
+                }
+
+                composable("profile") {
+                    ContaScreen()
+                }
+
+                composable("cupons") {
+                    CuponsScreen()
                 }
             }
-            
-            // Eventos salvos
-            composable("checkin") {
-                CheckinsSalvosScreen(
-                    onEventoClick = { evento ->
-                        navController.navigate("detail/${evento.id}")
-                    },
-                    checkinsSalvosViewModel = checkinsSalvosViewModel,
-                    feedViewModel = feedViewModel
-                )
-            }
-            
-            composable("search") {
-                PlaceholderScreen("Buscar")
-            }
-            
-            composable("profile") {
-                ContaScreen()
-            }
-            
-            composable("cupons") {
-                CuponsScreen()
-            }
+        }
+    }
+}
+
+@Composable
+private fun AuthNavHost() {
+    val navController = rememberNavController()
+    NavHost(
+        navController = navController,
+        startDestination = "login"
+    ) {
+        composable("login") {
+            LoginScreen(onCreateAccountClick = { navController.navigate("register") })
+        }
+        composable("register") {
+            RegisterScreen(
+                onBack = { navController.popBackStack() },
+                onRegisterSuccess = {
+                    navController.popBackStack("login", inclusive = false)
+                }
+            )
         }
     }
 }
