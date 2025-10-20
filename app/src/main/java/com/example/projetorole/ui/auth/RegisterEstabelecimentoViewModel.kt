@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projetorole.network.ApiClient
 import com.example.projetorole.network.ApiResponse
-import com.example.projetorole.network.RegisterRequest
-import com.example.projetorole.network.UsuarioNetwork
+import com.example.projetorole.network.EstabelecimentoNetwork
+import com.example.projetorole.network.EstabelecimentoRegisterRequestNetwork
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -13,39 +13,40 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class RegisterUiState(
-    val nome: String = "",
+data class RegisterEstabelecimentoUiState(
+    val nomeFantasia: String = "",
     val email: String = "",
     val senha: String = "",
     val confirmarSenha: String = "",
+    val cnpj: String = "",
     val isLoading: Boolean = false,
     val error: String? = null,
-    val successMessage: String? = null
+    val success: Boolean = false
 )
 
-class RegisterViewModel : ViewModel() {
+class RegisterEstabelecimentoViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow(RegisterUiState())
-    val uiState: StateFlow<RegisterUiState> = _uiState
+    private val _uiState = MutableStateFlow(RegisterEstabelecimentoUiState())
+    val uiState: StateFlow<RegisterEstabelecimentoUiState> = _uiState.asStateFlow()
 
-    fun onNomeChange(value: String) = _uiState.update { it.copy(nome = value) }
+    fun onNomeFantasiaChange(value: String) = _uiState.update { it.copy(nomeFantasia = value) }
     fun onEmailChange(value: String) = _uiState.update { it.copy(email = value) }
     fun onSenhaChange(value: String) = _uiState.update { it.copy(senha = value) }
     fun onConfirmarSenhaChange(value: String) = _uiState.update { it.copy(confirmarSenha = value) }
-
-    fun clearError() = _uiState.update { it.copy(error = null) }
-    fun clearSuccessMessage() = _uiState.update { it.copy(successMessage = null) }
+    fun onCnpjChange(value: String) = _uiState.update { it.copy(cnpj = value) }
 
     fun registrar() {
-        val current = _uiState.value
-        val email = current.email.trim()
-        val senha = current.senha
-        val confirmar = current.confirmarSenha
+        val state = _uiState.value
+        val email = state.email.trim()
+        val senha = state.senha
+        val confirmar = state.confirmarSenha
+        val nomeFantasia = state.nomeFantasia.trim()
 
-        if (email.isEmpty() || senha.isEmpty() || confirmar.isEmpty()) {
+        if (email.isBlank() || senha.isBlank() || confirmar.isBlank() || nomeFantasia.isBlank()) {
             _uiState.update { it.copy(error = "Preencha todos os campos obrigatórios") }
             return
         }
@@ -56,41 +57,35 @@ class RegisterViewModel : ViewModel() {
         }
 
         if (senha.length < 6) {
-            _uiState.update { it.copy(error = "A senha deve ter pelo menos 6 caracteres") }
+            _uiState.update { it.copy(error = "Senha deve ter pelo menos 6 caracteres") }
             return
         }
 
-        if (_uiState.value.isLoading) return
-
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update { it.copy(isLoading = true, error = null, success = false) }
 
-            val result = runCatching {
-                ApiClient.client.post("${ApiClient.BASE_URL}/api/register") {
+            val resultado = runCatching {
+                ApiClient.client.post("${ApiClient.BASE_URL}/api/estabelecimentos/register") {
                     contentType(ContentType.Application.Json)
                     setBody(
-                        RegisterRequest(
-                            nome = current.nome.takeIf { it.isNotBlank() },
+                        EstabelecimentoRegisterRequestNetwork(
                             email = email,
-                            senha = senha
+                            senha = senha,
+                            nomeFantasia = nomeFantasia,
+                            cnpj = state.cnpj.takeIf { it.isNotBlank() }
                         )
                     )
-                }.body<ApiResponse<UsuarioNetwork>>()
+                }.body<ApiResponse<EstabelecimentoNetwork>>()
             }
 
-            result.onSuccess { response ->
+            resultado.onSuccess { response ->
                 if (response.success) {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            successMessage = response.message.ifBlank { "Conta criada com sucesso" }
-                        )
-                    }
+                    _uiState.update { it.copy(isLoading = false, success = true) }
                 } else {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = response.message.ifBlank { "Não foi possível criar a conta" }
+                            error = response.message.ifBlank { "Não foi possível cadastrar" }
                         )
                     }
                 }
@@ -104,4 +99,7 @@ class RegisterViewModel : ViewModel() {
             }
         }
     }
+
+    fun consumeSuccess() = _uiState.update { it.copy(success = false) }
+    fun clearError() = _uiState.update { it.copy(error = null) }
 }

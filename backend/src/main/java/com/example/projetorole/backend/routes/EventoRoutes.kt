@@ -2,6 +2,7 @@ package com.example.projetorole.backend.routes
 
 import com.example.projetorole.backend.models.ApiResponse
 import com.example.projetorole.backend.models.EventoRequest
+import com.example.projetorole.backend.security.SubjectType
 import com.example.projetorole.backend.security.ensureAuthenticated
 import com.example.projetorole.backend.services.EventoService
 import io.ktor.http.HttpStatusCode
@@ -41,18 +42,41 @@ fun Route.configureEventoRoutes() {
         }
 
         post {
-            if (call.ensureAuthenticated() == null) return@post
+            val principal = call.ensureAuthenticated() ?: return@post
+            if (principal.subjectType != SubjectType.ESTAB) {
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    ApiResponse<Unit>(success = false, message = "Apenas estabelecimentos podem criar eventos")
+                )
+                return@post
+            }
+
             val payload = runCatching { call.receive<EventoRequest>() }.getOrElse {
                 call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, "Payload inválido"))
                 return@post
             }
 
-            val created = EventoService.criarEvento(payload)
+            val sanitized = payload.sanitized()
+            val validationError = validateEventoRequest(sanitized)
+            if (validationError != null) {
+                call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, validationError))
+                return@post
+            }
+
+            val created = EventoService.criarEvento(sanitized, principal.subjectId)
             call.respond(HttpStatusCode.Created, ApiResponse(success = true, message = "Evento criado", data = created))
         }
 
         put("/{id}") {
-            if (call.ensureAuthenticated() == null) return@put
+            val principal = call.ensureAuthenticated() ?: return@put
+            if (principal.subjectType != SubjectType.ESTAB) {
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    ApiResponse<Unit>(success = false, message = "Apenas estabelecimentos podem editar eventos")
+                )
+                return@put
+            }
+
             val id = call.parameters["id"]?.toIntOrNull()
             if (id == null) {
                 call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, "ID inválido"))
@@ -64,27 +88,52 @@ fun Route.configureEventoRoutes() {
                 return@put
             }
 
-            val updated = EventoService.atualizarEvento(id, payload)
-            if (updated != null) {
-                call.respond(ApiResponse(success = true, message = "Evento atualizado", data = updated))
-            } else {
-                call.respond(HttpStatusCode.NotFound, ApiResponse<Unit>(false, "Evento não encontrado"))
+            val sanitized = payload.sanitized()
+            val validationError = validateEventoRequest(sanitized)
+            if (validationError != null) {
+                call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, validationError))
+                return@put
+            }
+
+            when (val result = EventoService.atualizarEvento(id, sanitized, principal.subjectId)) {
+                is EventoService.UpdateResult.Success -> {
+                    call.respond(ApiResponse(success = true, message = "Evento atualizado", data = result.response))
+                }
+                EventoService.UpdateResult.NotFound -> {
+                    call.respond(HttpStatusCode.NotFound, ApiResponse<Unit>(false, "Evento não encontrado"))
+                }
+                EventoService.UpdateResult.Forbidden -> {
+                    call.respond(HttpStatusCode.Forbidden, ApiResponse<Unit>(false, "Você não pode editar este evento"))
+                }
             }
         }
 
         delete("/{id}") {
-            if (call.ensureAuthenticated() == null) return@delete
+            val principal = call.ensureAuthenticated() ?: return@delete
+            if (principal.subjectType != SubjectType.ESTAB) {
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    ApiResponse<Unit>(success = false, message = "Apenas estabelecimentos podem remover eventos")
+                )
+                return@delete
+            }
+
             val id = call.parameters["id"]?.toIntOrNull()
             if (id == null) {
                 call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, "ID inválido"))
                 return@delete
             }
 
-            val removed = EventoService.removerEvento(id)
-            if (removed) {
-                call.respond(ApiResponse<Unit>(success = true, message = "Evento removido"))
-            } else {
-                call.respond(HttpStatusCode.NotFound, ApiResponse<Unit>(false, "Evento não encontrado"))
+            when (val result = EventoService.removerEvento(id, principal.subjectId)) {
+                EventoService.DeleteResult.Success -> {
+                    call.respond(ApiResponse<Unit>(success = true, message = "Evento removido"))
+                }
+                EventoService.DeleteResult.NotFound -> {
+                    call.respond(HttpStatusCode.NotFound, ApiResponse<Unit>(false, "Evento não encontrado"))
+                }
+                EventoService.DeleteResult.Forbidden -> {
+                    call.respond(HttpStatusCode.Forbidden, ApiResponse<Unit>(false, "Você não pode remover este evento"))
+                }
             }
         }
 
@@ -104,4 +153,37 @@ fun Route.configureEventoRoutes() {
             }
         }
     }
+
+    route("/api/estabelecimentos") {
+        get("/me/eventos") {
+            val principal = call.ensureAuthenticated() ?: return@get
+            if (principal.subjectType != SubjectType.ESTAB) {
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    ApiResponse<Unit>(success = false, message = "Apenas estabelecimentos podem acessar seus eventos")
+                )
+                return@get
+            }
+
+            val eventos = EventoService.listarEventosDoEstabelecimento(principal.subjectId)
+            call.respond(
+                ApiResponse(success = true, message = "Eventos do estabelecimento", data = eventos)
+            )
+        }
+    }
 }
+
+private val horarioIsoRegex = Regex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}\$")
+
+private fun validateEventoRequest(payload: EventoRequest): String? {
+    if (payload.nome.isBlank()) return "O nome do evento não pode estar vazio"
+    if (payload.local.isBlank()) return "O local do evento não pode estar vazio"
+    if (!horarioIsoRegex.matches(payload.horario)) return "O horário do evento deve estar no formato correto"
+    return null
+}
+
+private fun EventoRequest.sanitized(): EventoRequest = copy(
+    nome = nome.trim(),
+    local = local.trim(),
+    horario = horario.trim()
+)

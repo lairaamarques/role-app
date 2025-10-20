@@ -2,6 +2,7 @@ package com.example.projetorole.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projetorole.data.auth.ActorType
 import com.example.projetorole.data.auth.AuthRepository
 import com.example.projetorole.network.ApiClient
 import com.example.projetorole.network.ApiResponse
@@ -14,6 +15,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -21,39 +23,29 @@ data class LoginUiState(
     val email: String = "",
     val senha: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val success: Boolean = false
 )
 
-class LoginViewModel : ViewModel() {
+class LoginUsuarioViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
-    val uiState: StateFlow<LoginUiState> = _uiState
+    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    fun onEmailChange(value: String) {
-        _uiState.update { it.copy(email = value) }
-    }
-
-    fun onSenhaChange(value: String) {
-        _uiState.update { it.copy(senha = value) }
-    }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
+    fun onEmailChange(value: String) = _uiState.update { it.copy(email = value) }
+    fun onSenhaChange(value: String) = _uiState.update { it.copy(senha = value) }
 
     fun login() {
         val email = _uiState.value.email.trim()
         val senha = _uiState.value.senha
 
-        if (email.isEmpty() || senha.isEmpty()) {
+        if (email.isBlank() || senha.isBlank()) {
             _uiState.update { it.copy(error = "Informe e-mail e senha") }
             return
         }
 
-        if (_uiState.value.isLoading) return
-
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update { it.copy(isLoading = true, error = null, success = false) }
 
             val result = runCatching {
                 ApiClient.client.post("${ApiClient.BASE_URL}/api/login") {
@@ -63,9 +55,15 @@ class LoginViewModel : ViewModel() {
             }
 
             result.onSuccess { response ->
-                if (response.success && response.data != null) {
-                    AuthRepository.setToken(response.data.token)
-                    _uiState.update { it.copy(isLoading = false) }
+                val data = response.data
+                if (response.success && data != null) {
+                    AuthRepository.setSession(
+                        token = data.token,
+                        actorType = ActorType.USER,
+                        displayName = data.usuario.nome,
+                        email = data.usuario.email
+                    )
+                    _uiState.update { it.copy(isLoading = false, success = true) }
                 } else {
                     _uiState.update {
                         it.copy(
@@ -78,10 +76,12 @@ class LoginViewModel : ViewModel() {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = throwable.message ?: "Erro ao conectar ao servidor"
+                        error = throwable.message ?: "Erro ao realizar login"
                     )
                 }
             }
         }
     }
+
+    fun consumeSuccess() = _uiState.update { it.copy(success = false) }
 }

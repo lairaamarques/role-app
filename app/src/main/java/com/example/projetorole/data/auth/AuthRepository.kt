@@ -1,7 +1,6 @@
 package com.example.projetorole.data.auth
 
 import android.content.Context
-import com.example.projetorole.data.auth.AuthDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,8 +20,16 @@ object AuthRepository {
     private val _token = MutableStateFlow<String?>(null)
     val token: StateFlow<String?> = _token.asStateFlow()
 
+    private val _actorType = MutableStateFlow<ActorType?>(null)
+    val actorType: StateFlow<ActorType?> = _actorType.asStateFlow()
+
     private val _authEvents = MutableSharedFlow<AuthEvent>(extraBufferCapacity = 1)
     val authEvents: SharedFlow<AuthEvent> = _authEvents.asSharedFlow()
+
+    data class AuthProfile(val displayName: String?, val email: String?)
+
+    private val _profile = MutableStateFlow<AuthProfile?>(null)
+    val profile: StateFlow<AuthProfile?> = _profile.asStateFlow()
 
     @Volatile
     private var initialized = false
@@ -33,21 +40,36 @@ object AuthRepository {
             if (initialized) return
             dataStore = AuthDataStore(context.applicationContext)
             scope.launch {
-                dataStore.tokenFlow.collect { _token.value = it }
+                launch { dataStore.tokenFlow.collect { _token.value = it } }
+                launch { dataStore.actorTypeFlow.collect { _actorType.value = it } }
+                launch { dataStore.profileFlow.collect { data ->
+                    _profile.value = data?.let { AuthProfile(it.displayName, it.email) }
+                } }
             }
             initialized = true
         }
     }
 
-    suspend fun setToken(token: String?) {
+    suspend fun setSession(token: String?, actorType: ActorType?, displayName: String?, email: String?) {
         ensureInitialized()
-        dataStore.setToken(token)
+        _profile.value = AuthProfile(displayName, email)
+        dataStore.setSession(token, actorType, displayName, email)
     }
 
-    suspend fun clearToken() = setToken(null)
+    suspend fun setToken(token: String?) {
+        ensureInitialized()
+        val currentProfile = _profile.value
+        dataStore.setSession(token, _actorType.value, currentProfile?.displayName, currentProfile?.email)
+    }
 
-    val currentToken: String?
-        get() = _token.value
+    suspend fun clearToken() {
+        ensureInitialized()
+        _profile.value = null
+        dataStore.setSession(null, null, null, null)
+    }
+
+    val currentToken: String? get() = _token.value
+    val currentActorType: ActorType? get() = _actorType.value
 
     fun notifyUnauthorized() {
         scope.launch { _authEvents.emit(AuthEvent.Unauthorized) }

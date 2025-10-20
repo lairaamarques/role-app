@@ -2,8 +2,10 @@ package com.example.projetorole.ui.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -22,14 +24,16 @@ import com.example.projetorole.data.model.Evento
 fun DetalheEventoScreen(
     evento: Evento,
     viewModel: DetalheEventoViewModel = viewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onCheckin: (Evento) -> Unit
 ) {
     val isCheckedIn by viewModel.isCheckedIn.collectAsState()
     
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFB3C6FF))
+            .background(Color(0xFF090040))
+            .verticalScroll(rememberScrollState())
     ) {
         Box(
             modifier = Modifier
@@ -85,7 +89,7 @@ fun DetalheEventoScreen(
         
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .background(Color(0xFF090040))
                 .padding(20.dp)
         ) {
@@ -98,23 +102,6 @@ fun DetalheEventoScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 8.dp)
-            ) {
-                Icon(
-                    Icons.Default.DateRange,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "Hoje",
-                    color = Color.White,
-                    fontSize = 16.sp
-                )
-            }
             
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -136,17 +123,17 @@ fun DetalheEventoScreen(
             
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             ) {
                 Icon(
-                    Icons.Default.Settings,
+                    Icons.Default.DateRange,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Horário",
+                    evento.getDataFormatada(),
                     color = Color.White,
                     fontSize = 16.sp
                 )
@@ -203,7 +190,7 @@ fun DetalheEventoScreen(
                     Text(
                         "${evento.checkIns}",
                         color = Color(0xFFFFCC00),
-                        fontSize = 48.sp,
+                        fontSize = 32.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.width(8.dp))
@@ -226,11 +213,89 @@ fun DetalheEventoScreen(
             )
             
             Text(
-                "Prepare o chapéu e a bota: venha para a Noite Sertaneja do Rancho Estrela!\n\nSe você ama um bom modão, dança agarradinha e aquele clima de festa do interior, não perca!",
+                evento.descricao ?: "Sem descrição",
                 color = Color.White,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
             )
+            
+            Spacer(Modifier.height(24.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF471396), RoundedCornerShape(12.dp))
+                    .padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Valor do ingresso:",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                Spacer(Modifier.height(8.dp))
+                
+                Text(
+                    evento.getPrecoFormatado(),
+                    color = if (evento.pago && evento.preco != null) Color(0xFFFFCC00) else Color(0xFF4CAF50),
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { /* Sem lógica por enquanto */ },
+                modifier = Modifier
+                    .width(240.dp)
+                    .height(60.dp)
+                    .align(Alignment.CenterHorizontally),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFCC00),
+                    contentColor = Color(0xFF090040)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Comprar Ingresso", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    if (!isCheckedIn) {
+                        viewModel.fazerCheckin()
+                        onCheckin(evento)
+                    }
+                },
+                modifier = Modifier
+                    .width(240.dp)
+                    .height(60.dp)
+                    .align(Alignment.CenterHorizontally),
+                enabled = !isCheckedIn,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFCC00),
+                    contentColor = Color(0xFF090040),
+                    disabledContainerColor = Color(0xFF6750A4),
+                    disabledContentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    if (isCheckedIn) "Check-in realizado" else "Realizar Check-in",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+
+            Spacer(Modifier.height(32.dp))
         }
     }
 }

@@ -30,4 +30,5 @@ dependencies {
     implementation("com.h2database:h2:2.2.224")
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }

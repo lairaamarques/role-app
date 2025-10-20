@@ -134,28 +134,12 @@ fun FeedScreen(
                 val selected = idx == categoriaSelecionada
                 AssistChip(
                     onClick = { categoriaSelecionada = idx },
-                    label = {
-                        Text(
-                            categoria,
-                            color = if (selected) Color(0xFF6750A4) else Color(0xFFFEF7FF),
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 14.sp
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Star,
-                            contentDescription = null,
-                            tint = if (selected) Color(0xFF6750A4) else Color(0xFFFEF7FF),
-                            modifier = Modifier.size(16.dp)
-                        )
-                    },
+                    label = { Text(categoria) },
+                    modifier = Modifier,
                     colors = AssistChipDefaults.assistChipColors(
-                        containerColor = if (selected) Color(0xFFFEF7FF) else Color(0xFF6750A4),
-                        labelColor = if (selected) Color(0xFF6750A4) else Color(0xFFFEF7FF)
-                    ),
-                    border = null,
-                    modifier = Modifier.height(32.dp)
+                        containerColor = if (selected) Color(0xFFFFCC00) else Color.Transparent,
+                        labelColor = if (selected) Color(0xFF090040) else Color.White
+                    )
                 )
             }
         }
@@ -313,7 +297,7 @@ private fun EventoCard(
                         )
                         Spacer(Modifier.width(2.dp))
                         Text(
-                            "Hoje, ${evento.horario}",
+                            evento.getDataFormatada(),
                             color = Color(0xFFFEF7FF),
                             fontSize = 9.sp
                         )

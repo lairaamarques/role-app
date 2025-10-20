@@ -5,12 +5,15 @@ import com.example.projetorole.data.model.Evento
 
 fun EventoNetwork.toModel(): Evento = Evento(
     id = id,
-    nome = "🌐 $nome",
+    nome = nome,
     local = local,
     horario = horario,
     checkIns = checkIns,
     pago = pago,
-    preco = preco
+    preco = preco,
+    descricao = descricao,
+    estabelecimentoId = estabelecimentoId,
+    estabelecimentoNome = estabelecimentoNome
 )
 
 fun CupomNetwork.toModel(): Cupom = Cupom(

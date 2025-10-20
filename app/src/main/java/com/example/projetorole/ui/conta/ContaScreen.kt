@@ -26,7 +26,9 @@ import com.example.projetorole.R
 
 @Composable
 fun ContaScreen(
-    contaViewModel: ContaViewModel = viewModel()
+    isEstabelecimento: Boolean,
+    onManageEvents: () -> Unit,
+    contaViewModel: ContaViewModel = ContaViewModel()
 ) {
     val usuario by contaViewModel.usuario.collectAsState()
     val diasAgenda by contaViewModel.diasAgenda.collectAsState()
@@ -54,7 +56,11 @@ fun ContaScreen(
 
         Spacer(Modifier.height(48.dp))
 
-        MenuSection(onLogout = contaViewModel::logout)
+        MenuSection(
+            showManageEvents = isEstabelecimento,
+            onManageEvents = onManageEvents,
+            onLogout = contaViewModel::logout
+        )
     }
 }
 
@@ -81,9 +87,9 @@ private fun PerfilSection(usuario: Usuario) {
             textAlign = TextAlign.Center
         )
         Text(
-            "${usuario.idade} anos",
+            usuario.email,
             color = Color.White.copy(alpha = 0.7f),
-            fontSize = 18.sp,
+            fontSize = 16.sp,
             textAlign = TextAlign.Center
         )
     }
@@ -183,7 +189,11 @@ private fun DiaAgendaCard(dia: DiaAgenda) {
 }
 
 @Composable
-private fun MenuSection(onLogout: () -> Unit) {
+private fun MenuSection(
+    showManageEvents: Boolean,
+    onManageEvents: () -> Unit,
+    onLogout: () -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -196,6 +206,15 @@ private fun MenuSection(onLogout: () -> Unit) {
             icon = Icons.Default.Info,
             text = "Minhas informações"
         )
+        if (showManageEvents) {
+            Button(
+                onClick = onManageEvents,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFCC00)),
+                modifier = Modifier.fillMaxWidth(0.8f)
+            ) {
+                Text("Gerenciar eventos", color = Color(0xFF090040))
+            }
+        }
         Button(
             onClick = onLogout,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF471396)),

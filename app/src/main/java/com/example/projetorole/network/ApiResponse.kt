@@ -17,7 +17,10 @@ data class EventoNetwork(
     val horario: String,
     val checkIns: Int,
     val pago: Boolean,
-    val preco: Double?
+    val preco: Double? = null,
+    val descricao: String? = null,
+    val estabelecimentoId: Int? = null,
+    val estabelecimentoNome: String? = null
 )
 
 @Serializable
@@ -54,4 +57,44 @@ data class RegisterRequest(
     val nome: String? = null,
     val email: String,
     val senha: String
+)
+
+@Serializable
+data class EstabelecimentoNetwork(
+    val id: Int,
+    val email: String,
+    val nomeFantasia: String,
+    val cnpj: String? = null,
+    val fotoUrl: String? = null
+)
+
+@Serializable
+data class EstabelecimentoAuthResponseNetwork(
+    val token: String,
+    val estabelecimento: EstabelecimentoNetwork
+)
+
+@Serializable
+data class EstabelecimentoRegisterRequestNetwork(
+    val email: String,
+    val senha: String,
+    val nomeFantasia: String,
+    val cnpj: String? = null,
+    val fotoUrl: String? = null
+)
+
+@Serializable
+data class EstabelecimentoLoginRequestNetwork(
+    val email: String,
+    val senha: String
+)
+
+@Serializable
+data class EventoUpsertRequestNetwork(
+    val nome: String,
+    val local: String,
+    val horario: String,
+    val pago: Boolean,
+    val preco: Double? = null,
+    val descricao: String? = null
 )

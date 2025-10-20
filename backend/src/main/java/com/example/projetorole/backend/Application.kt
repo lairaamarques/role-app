@@ -3,7 +3,9 @@ package com.example.projetorole.backend
 import com.example.projetorole.backend.database.DatabaseFactory
 import com.example.projetorole.backend.routes.configureAuthRoutes
 import com.example.projetorole.backend.routes.configureCupomRoutes
+import com.example.projetorole.backend.routes.configureEstabelecimentoAuthRoutes
 import com.example.projetorole.backend.routes.configureEventoRoutes
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
@@ -15,7 +17,6 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
-import io.ktor.serialization.kotlinx.json.json
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
@@ -50,6 +51,7 @@ fun Application.module() {
         }
 
         configureAuthRoutes()
+        configureEstabelecimentoAuthRoutes()
         configureEventoRoutes()
         configureCupomRoutes()
     }

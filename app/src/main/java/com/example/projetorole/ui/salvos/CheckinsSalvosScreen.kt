@@ -157,7 +157,7 @@ private fun CheckinSalvoCard(
                             fontSize = 12.sp
                         )
                     }
-                    
+
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Default.DateRange,
@@ -167,7 +167,7 @@ private fun CheckinSalvoCard(
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            "Hoje, ${evento.horario}",
+                            "${evento.getDataFormatada()} às ${evento.getHoraFormatada()}",
                             color = Color.Gray,
                             fontSize = 12.sp
                         )

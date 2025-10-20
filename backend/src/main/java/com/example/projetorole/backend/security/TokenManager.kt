@@ -4,25 +4,34 @@ import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-data class TokenPayload(val userId: Int, val expiresAt: Long)
+enum class SubjectType { USER, ESTAB }
+
+data class TokenPayload(
+    val subjectId: Int,
+    val subjectType: SubjectType,
+    val expiresAt: Long
+)
 
 object TokenManager {
     private val tokens = ConcurrentHashMap<String, TokenPayload>()
     private val ttlMillis = Duration.ofHours(2).toMillis()
 
-    fun createToken(userId: Int): String {
+    fun createToken(subjectId: Int, subjectType: SubjectType): String {
         val token = UUID.randomUUID().toString()
-        tokens[token] = TokenPayload(userId, System.currentTimeMillis() + ttlMillis)
+        tokens[token] = TokenPayload(
+            subjectId = subjectId,
+            subjectType = subjectType,
+            expiresAt = System.currentTimeMillis() + ttlMillis
+        )
         return token
     }
 
-    fun getUserId(token: String?): Int? {
+    fun getPayload(token: String?): TokenPayload? {
         if (token.isNullOrBlank()) return null
         cleanupExpired()
         val payload = tokens[token] ?: return null
-        return if (payload.expiresAt > System.currentTimeMillis()) payload.userId else {
-            tokens.remove(token)
-            null
+        return if (payload.expiresAt > System.currentTimeMillis()) payload else {
+            tokens.remove(token); null
         }
     }
 
@@ -30,7 +39,7 @@ object TokenManager {
         tokens.remove(token)
     }
 
-    fun validate(token: String?): Boolean = getUserId(token) != null
+    fun validate(token: String?): Boolean = getPayload(token) != null
 
     private fun cleanupExpired() {
         val now = System.currentTimeMillis()

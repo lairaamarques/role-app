@@ -5,6 +5,7 @@ import com.example.projetorole.backend.models.LoginResponse
 import com.example.projetorole.backend.models.RegisterRequest
 import com.example.projetorole.backend.models.UsuarioDTO
 import com.example.projetorole.backend.models.Users
+import com.example.projetorole.backend.security.SubjectType
 import com.example.projetorole.backend.security.TokenManager
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +33,7 @@ object AuthService {
             null
         } else {
             val userId = row[Users.id].value
-            val token = TokenManager.createToken(userId)
+            val token = TokenManager.createToken(userId, SubjectType.USER)
             LoginResponse(
                 token = token,
                 usuario = UsuarioDTO(
