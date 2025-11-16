@@ -1,5 +1,18 @@
 package com.example.projetorole.ui.manage
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,14 +26,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+//import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+//import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -40,7 +53,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+//import androidx.core.location.LocationManagerCompat.getCurrentLocation
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.Done // <-- 🚀 ADICIONE ESTA LINHA
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,10 +70,46 @@ fun EventFormScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(eventoId) {
-        if (eventoId != null) viewModel.loadEvento(eventoId)
+    val context = LocalContext.current
+
+    val locationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
     }
 
+
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            ) {
+
+                getCurrentLocation(context, locationClient) { latitude, longitude ->
+                    viewModel.onLocationChange(latitude, longitude)
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Localização definida com sucesso!")
+                    }
+                }
+            } else {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Permissão de localização é necessária.")
+                }
+            }
+        }
+    )
+    LaunchedEffect(eventoId) {
+        if (eventoId != null) {
+            viewModel.loadEvento(eventoId)
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it) }
     }
@@ -141,6 +193,34 @@ fun EventFormScreen(
                     enabled = !uiState.isLoading
                 )
 
+                Button(
+                    onClick = {
+
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isLoading,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF471396),
+                        contentColor = Color.White
+                    )
+                ) {
+                    if (uiState.isLocationSet || uiState.isEdit) {
+                        Icon(Icons.Default.Done, contentDescription = "Localização Definida")
+                        Spacer(Modifier.padding(4.dp))
+                        Text("Localização Definida ✓")
+                    } else {
+                        Icon(Icons.Default.LocationOn, contentDescription = "Definir Localização")
+                        Spacer(Modifier.padding(4.dp))
+                        Text("Definir Localização Atual")
+                    }
+                }
+
                 OutlinedTextField(
                     value = uiState.descricao,
                     onValueChange = viewModel::onDescricaoChange,
@@ -222,3 +302,27 @@ private fun eventOutlinedColors() = TextFieldDefaults.colors(
     disabledTextColor = Color(0xFF090040).copy(alpha = 0.5f),
     cursorColor = Color(0xFF090040)
 )
+
+@SuppressLint("MissingPermission")
+private fun getCurrentLocation(
+    context: Context,
+    locationClient: com.google.android.gms.location.FusedLocationProviderClient,
+    onLocationFetched: (latitude: Double, longitude: Double) -> Unit
+) {
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        return
+    }
+
+    locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+        .addOnSuccessListener { location ->
+            if (location != null) {
+                onLocationFetched(location.latitude, location.longitude)
+            } else {
+                Toast.makeText(context, "Não foi possível obter a localização. Tente novamente.", Toast.LENGTH_SHORT).show()
+            }
+        }
+        .addOnFailureListener {
+            Toast.makeText(context, "Erro ao obter localização: ${it.message}", Toast.LENGTH_SHORT).show()
+        }
+}

@@ -54,7 +54,6 @@ fun NavGraph() {
             }
         }
     }
-
     if (token.isNullOrBlank()) {
         AuthNavHost()
     } else {
@@ -64,7 +63,6 @@ fun NavGraph() {
         val checkinsSalvosViewModel: CheckinsSalvosViewModel = viewModel()
         val eventos by feedViewModel.eventos.collectAsState()
 
-        // Atualizar NavGraph.kt com rotas de estabelecimento completas
         if (isEstabelecimento) {
             MainScreenEstabelecimento(navController = navController) {
                 NavHost(navController = navController, startDestination = "myEvents") {
@@ -80,7 +78,6 @@ fun NavGraph() {
                                 backStackEntry.savedStateHandle["refresh"] = false
                             }
                         }
-
                         MyEventsScreen(
                             viewModel = manageViewModel,
                             onBack = { navController.popBackStack() },
@@ -151,25 +148,27 @@ fun NavGraph() {
                             checkinsSalvosViewModel = checkinsSalvosViewModel
                         )
                     }
-
                     composable(
                         "detail/{eventoId}",
                         arguments = listOf(navArgument("eventoId") { type = NavType.IntType })
                     ) { entry ->
-                        val eventoId = entry.arguments?.getInt("eventoId") ?: return@composable
-                        val evento = eventos.find { it.id == eventoId }
-                        if (evento != null) {
+                        val eventoId = entry.arguments?.getInt("eventoId")
+
+                        if (eventoId == null || eventoId == 0) {
+                            PlaceholderScreen("ID do evento inválido")
+                        } else {
                             DetalheEventoScreen(
-                                evento = evento,
+                                eventoId = eventoId,
+
                                 onBack = { navController.popBackStack() },
-                                onCheckin = { atualizado ->
-                                    navController.navigate("checkinSuccess/${atualizado.id}") {
+
+                                onCheckinSuccess = {
+                                    navController.navigate("checkinSuccess/${eventoId}") {
                                         launchSingleTop = true
+                                        popUpTo("feed")
                                     }
                                 }
                             )
-                        } else {
-                            PlaceholderScreen("Evento não encontrado")
                         }
                     }
 
@@ -211,7 +210,6 @@ fun NavGraph() {
         }
     }
 }
-
 @Composable
 private fun AuthNavHost() {
     val navController = rememberNavController()

@@ -1,0 +1,100 @@
+### ==============================================
+### TESTES DE USUÁRIO (Check-in)
+### ==============================================
+
+### 1. Registrar um novo USUÁRIO
+POST http://127.0.0.1:8080/api/register
+Content-Type: application/json
+
+{
+  "nome": "Usuario de Teste 2",
+  "email": "teste2@usuario.com",
+  "senha": "1234567"
+}
+
+> {% client.global.set("user_email", "teste@usuario.com"); %}
+
+### 2. Login como USUÁRIO (para pegar o token de check-in)
+POST http://127.0.0.1:8080/api/login
+Content-Type: application/json
+
+{
+  "email": "teste2@usuario.com",
+  "senha": "1234567"
+}
+
+> {% client.global.set("user_token", response.body.data.token); %}
+
+### ==============================================
+### TESTES DE ESTABELECIMENTO (Produção)
+### ==============================================
+
+### 3. (NOVO!) Registrar um novo ESTABELECIMENTO
+# Esta rota estava correta
+POST http://127.0.0.1:8080/api/estabelecimentos/register
+Content-Type: application/json
+
+{
+  "nomeFantasia": "Teatro Amazonas Eventos",
+  "email": "contato@teatroamazonas.com",
+  "senha": "senhaforte123"
+}
+
+> {% client.global.set("estab_email", "contato@teatroamazonas.com"); %}
+
+### 4. Login como o NOVO ESTABELECIMENTO (para pegar o token)
+# Esta rota estava correta
+POST http://127.0.0.1:8080/api/estabelecimentos/login
+Content-Type: application/json
+
+{
+  "email": "{{estab_email}}",
+  "senha": "senhaforte123"
+}
+
+> {% client.global.set("estab_token", response.body.data.token); %}
+
+### ==============================================
+### TESTE DE EVENTOS E CHECK-IN
+### ==============================================
+
+### 5. Criar um novo EVENTO (Usando o token do NOVO Estabelecimento)
+# Esta rota estava correta
+POST http://127.0.0.1:8080/api/eventos
+Authorization: Bearer {{estab_token}}
+Content-Type: application/json
+
+{
+  "nome": "Show de Teste no Teatro",
+  "local": "Teatro Amazonas, Manaus",
+  "horario": "2025-12-25T20:00",
+  "pago": true,
+  "preco": 50.0,
+  "descricao": "Um show incrível para testar a API.",
+  "latitude": -3.13032,
+  "longitude": -60.02422
+}
+
+> {% client.global.set("event_id", response.body.data.id); %}
+
+### 6. TESTE FINAL: Fazer Check-in no Evento (Usando o token do Usuário)
+# Esta rota estava correta
+POST http://127.0.0.1:8080/api/eventos/{{event_id}}/checkin
+Authorization: Bearer b62b8c70-6053-413a-88d8-92aed678320d
+Content-Type: application/json
+
+{
+  "latitude": -3.13030,
+  "longitude": -60.02420
+}
+
+### 7. (TESTE DE FALHA) Tentar fazer Check-in longe
+# Esta rota estava correta
+POST http://127.0.0.1:8080/api/eventos/{{event_id}}/checkin
+Authorization: Bearer d2ecfb5a-d5f0-4af4-82c3-781f81f007dd
+Content-Type: application/json
+
+{
+  "latitude": -3.09736,
+  "longitude": -59.98301
+}

@@ -1,0 +1,11 @@
+{
+  "success": true,
+  "message": "Check-in realizado!",
+  "data": {
+    "id": 1,
+    "userId": 1,
+    "eventoId": 1,
+    "validatedAt": "2025-11-02T16:45:19.231416400",
+    "createdAt": "2025-11-02T16:45:19.231416400"
+  }
+}

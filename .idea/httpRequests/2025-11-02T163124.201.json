@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "message": "Estabelecimento cadastrado com sucesso",
+  "data": {
+    "id": 2,
+    "email": "contato@teatroamazonas.com",
+    "nomeFantasia": "Teatro Amazonas Eventos"
+  }
+}

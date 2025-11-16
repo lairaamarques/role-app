@@ -2,6 +2,8 @@ package com.example.projetorole.backend.models
 
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.ReferenceOption
+import org.jetbrains.exposed.sql.javatime.datetime
+import java.time.LocalDateTime
 
 object Users : IntIdTable("usuarios") {
     val email = varchar("email", 150).uniqueIndex()
@@ -31,6 +33,8 @@ object EventosTable : IntIdTable("eventos") {
         foreign = EstabelecimentosTable,
         onDelete = ReferenceOption.SET_NULL
     ).nullable()
+    val latitude = double("latitude").default(0.0)
+    val longitude = double("longitude").default(0.0)
 }
 
 object CuponsTable : IntIdTable("cupons") {
@@ -38,4 +42,10 @@ object CuponsTable : IntIdTable("cupons") {
     val descricao = text("descricao")
     val local = varchar("local", 255)
     val disponivel = bool("disponivel").default(true)
+}
+object CheckIns : IntIdTable("check_ins"){
+    val userId = reference("user_id", Users.id)
+    val eventoId = reference("evento_id", EventosTable.id)
+    val validatedAt = datetime("validated_at").nullable()
+    val createdAt = datetime("created_at").default(LocalDateTime.now())
 }

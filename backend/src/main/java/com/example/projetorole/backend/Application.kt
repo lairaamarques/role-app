@@ -18,11 +18,13 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
 
+
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
 }
 
+@Suppress("unused")
 fun Application.module() {
     DatabaseFactory.init()
 

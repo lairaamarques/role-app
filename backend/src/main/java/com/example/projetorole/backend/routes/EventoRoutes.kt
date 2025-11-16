@@ -1,9 +1,12 @@
 package com.example.projetorole.backend.routes
 
 import com.example.projetorole.backend.models.ApiResponse
+import com.example.projetorole.backend.models.CheckInRequest
 import com.example.projetorole.backend.models.EventoRequest
 import com.example.projetorole.backend.security.SubjectType
 import com.example.projetorole.backend.security.ensureAuthenticated
+import com.example.projetorole.backend.services.DistanceCheckException
+import com.example.projetorole.backend.services.EventNotFoundException
 import com.example.projetorole.backend.services.EventoService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
@@ -138,18 +141,43 @@ fun Route.configureEventoRoutes() {
         }
 
         post("/{id}/checkin") {
-            if (call.ensureAuthenticated() == null) return@post
-            val id = call.parameters["id"]?.toIntOrNull()
-            if (id == null) {
-                call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, "ID inválido"))
+
+            val principal = call.ensureAuthenticated() ?: return@post
+            if (principal.subjectType != SubjectType.USER) {
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    ApiResponse<Unit>(false, "Apenas usuários podem fazer check-in")
+                )
                 return@post
             }
 
-            val updated = EventoService.registrarCheckIn(id)
-            if (updated != null) {
-                call.respond(ApiResponse(success = true, message = "Check-in registrado", data = updated))
-            } else {
-                call.respond(HttpStatusCode.NotFound, ApiResponse<Unit>(false, "Evento não encontrado"))
+            val id = call.parameters["id"]?.toIntOrNull()
+            if (id == null) {
+                call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, "ID de evento inválido"))
+                return@post
+            }
+
+            val request = runCatching { call.receive<CheckInRequest>() }.getOrElse {
+                call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, "Corpo da requisição (lat/lon) inválido ou ausente"))
+                return@post
+            }
+
+            try {
+                val newCheckIn = EventoService.realizarCheckIn(
+                    userIdParam = principal.subjectId,
+                    eventId = id,
+                    userLatitude = request.latitude,
+                    userLongitude = request.longitude
+                )
+
+                call.respond(HttpStatusCode.Created, ApiResponse(true, "Check-in realizado!", newCheckIn))
+
+            } catch (e: EventNotFoundException) {
+                call.respond(HttpStatusCode.NotFound, ApiResponse(false, e.message ?: "Evento não encontrado", null))
+            } catch (e: DistanceCheckException) {
+                call.respond(HttpStatusCode.Forbidden, ApiResponse(false, e.message ?: "Distância inválida", null))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, ApiResponse(false, "Erro interno: ${e.message}", null))
             }
         }
     }

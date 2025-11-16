@@ -16,7 +16,6 @@ class CheckinsSalvosRepository {
             _checkinsSalvos.value = salvosAtual
         }
     }
-    
     fun removerCheckinSalvo(eventoId: Int) {
         _checkinsSalvos.value = _checkinsSalvos.value.filter { it.eventoId != eventoId }
     }
@@ -24,7 +23,6 @@ class CheckinsSalvosRepository {
     fun isCheckinSalvo(eventoId: Int): Boolean {
         return _checkinsSalvos.value.any { it.eventoId == eventoId }
     }
-    
     fun getCheckinsSalvos(): List<CheckinSalvo> {
         return _checkinsSalvos.value
     }

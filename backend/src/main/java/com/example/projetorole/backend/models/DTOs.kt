@@ -17,7 +17,9 @@ data class EventoRequest(
     val pago: Boolean,
     val preco: Double? = null,
     val descricao: String? = null,
-    val estabelecimentoId: Int? = null
+    val estabelecimentoId: Int? = null,
+    val latitude: Double,
+    val longitude: Double
 )
 
 @Serializable
@@ -120,4 +122,19 @@ data class EstabelecimentoLoginRequest(
 data class EstabelecimentoAuthResponse(
     val token: String,
     val estabelecimento: EstabelecimentoDTO
+)
+
+@Serializable
+data class CheckInRequest(
+    val latitude: Double,
+    val longitude: Double
+)
+
+@Serializable
+data class CheckInDTO(
+    val id: Int,
+    val userId: Int,
+    val eventoId: Int,
+    val validatedAt: String?,
+    val createdAt: String
 )

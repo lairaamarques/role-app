@@ -1,0 +1,4 @@
+{
+  "success": false,
+  "message": "Erro interno: org.h2.jdbc.JdbcSQLSyntaxErrorException: Table \"CHECK_INS\" not found; SQL statement:\nINSERT INTO CHECK_INS (CREATED_AT, EVENTO_ID, USER_ID, VALIDATED_AT) VALUES (?, ?, ?, ?) [42102-224]"
+}

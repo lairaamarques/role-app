@@ -1,0 +1,9 @@
+2025-11-02 16:36:13.685910-04:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "CHECK_INS" not found; SQL statement:
+INSERT INTO CHECK_INS (CREATED_AT, EVENTO_ID, USER_ID, VALIDATED_AT) VALUES (?, ?, ?, ?) [42102-224]
+2025-11-02 16:36:13.710900-04:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "CHECK_INS" not found; SQL statement:
+INSERT INTO CHECK_INS (CREATED_AT, EVENTO_ID, USER_ID, VALIDATED_AT) VALUES (?, ?, ?, ?) [42102-224]
+2025-11-02 16:36:13.722889-04:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "CHECK_INS" not found; SQL statement:
+INSERT INTO CHECK_INS (CREATED_AT, EVENTO_ID, USER_ID, VALIDATED_AT) VALUES (?, ?, ?, ?) [42102-224]

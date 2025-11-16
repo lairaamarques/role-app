@@ -1,5 +1,6 @@
 package com.example.projetorole.backend.database
 
+import com.example.projetorole.backend.models.CheckIns
 import com.example.projetorole.backend.models.CuponsTable
 import com.example.projetorole.backend.models.EstabelecimentosTable
 import com.example.projetorole.backend.models.EventosTable
@@ -23,7 +24,8 @@ object DatabaseFactory {
                 EstabelecimentosTable,
                 EventosTable,
                 CuponsTable,
-                Users
+                Users,
+                CheckIns
             )
         }
         seedDefaultEstabelecimento()

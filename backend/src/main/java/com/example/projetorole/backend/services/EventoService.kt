@@ -14,16 +14,22 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import com.example.projetorole.backend.models.CheckInDTO
+import com.example.projetorole.backend.models.CheckIns
+import java.time.LocalDateTime
+
+class EventNotFoundException : Exception("Evento não encontrado.")
+class DistanceCheckException : Exception("Usuário muito longe do evento.")
 
 object EventoService {
 
+    private const val MAX_DISTANCE_IN_KILOMETERS = 0.1
     private val eventoJoinEstabelecimento =
         EventosTable.leftJoin(
             otherTable = EstabelecimentosTable,
             onColumn = { estabelecimento },
             otherColumn = { EstabelecimentosTable.id }
         )
-
     fun listarEventos(): List<EventoResponse> = transaction {
         eventoJoinEstabelecimento.selectAll().map { it.toEventoResponse() }
     }
@@ -34,7 +40,6 @@ object EventoService {
             .singleOrNull()
             ?.toEventoResponse()
     }
-
     fun criarEvento(request: EventoRequest, establishmentId: Int): EventoResponse = transaction {
         val nomeSanitizado = request.nome.trim()
         val localSanitizado = request.local.trim()
@@ -48,6 +53,9 @@ object EventoService {
             it[preco] = request.preco
             it[descricao] = request.descricao // Adicionado salvamento da descricao
             it[estabelecimento] = EntityID(establishmentId, EstabelecimentosTable)
+
+            it[latitude] = request.latitude
+            it[longitude] = request.longitude
         } get EventosTable.id
 
         eventoJoinEstabelecimento
@@ -109,20 +117,47 @@ object EventoService {
         if (removed) DeleteResult.Success else DeleteResult.NotFound
     }
 
-    fun registrarCheckIn(id: Int): EventoResponse? = transaction {
-        val row = EventosTable
-            .select { EventosTable.id eq id }
-            .singleOrNull() ?: return@transaction null
+    fun realizarCheckIn(
+        userIdParam: Int,
+        eventId: Int,
+        userLatitude: Double,
+        userLongitude: Double
+    ): CheckInDTO = transaction {
 
-        val novoTotal = row[EventosTable.checkIns] + 1
-        EventosTable.update({ EventosTable.id eq id }) {
+        val event = EventosTable.select { EventosTable.id eq eventId }
+            .firstOrNull() ?: throw EventNotFoundException()
+
+        val eventLatitude = event[EventosTable.latitude]
+        val eventLongitude = event[EventosTable.longitude]
+
+        val distance = DistanceCalculator.calculate(
+            userLatitude, userLongitude,
+            eventLatitude, eventLongitude
+        )
+
+        if (distance > MAX_DISTANCE_IN_KILOMETERS) {
+            throw DistanceCheckException()
+        }
+
+        val newCheckIn = CheckIns.insert {
+            it[userId] = userIdParam
+            it[CheckIns.eventoId] = eventId
+            it[validatedAt] = LocalDateTime.now()
+            it[createdAt] = LocalDateTime.now()
+        }
+
+        val novoTotal = event[EventosTable.checkIns] + 1
+        EventosTable.update({ EventosTable.id eq eventId }) {
             it[checkIns] = novoTotal
         }
 
-        eventoJoinEstabelecimento
-            .select { EventosTable.id eq id }
-            .singleOrNull()
-            ?.toEventoResponse(checkInsOverride = novoTotal)
+        return@transaction CheckInDTO(
+            id = newCheckIn[CheckIns.id].value,
+            userId = newCheckIn[CheckIns.userId].value,
+            eventoId = newCheckIn[CheckIns.eventoId].value,
+            validatedAt = newCheckIn[CheckIns.validatedAt]?.toString(),
+            createdAt = newCheckIn[CheckIns.createdAt].toString()
+        )
     }
 
     fun listarEventosDoEstabelecimento(establishmentId: Int): List<EventoResponse> = transaction {

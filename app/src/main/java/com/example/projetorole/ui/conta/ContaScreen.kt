@@ -1,8 +1,11 @@
 package com.example.projetorole.ui.conta
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -37,10 +40,13 @@ fun ContaScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF090040))
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
+
+        Spacer(Modifier.height(16.dp))
 
         PerfilSection(usuario = usuario)
 
@@ -61,6 +67,9 @@ fun ContaScreen(
             onManageEvents = onManageEvents,
             onLogout = contaViewModel::logout
         )
+
+        Spacer(Modifier.height(16.dp))
+
     }
 }
 

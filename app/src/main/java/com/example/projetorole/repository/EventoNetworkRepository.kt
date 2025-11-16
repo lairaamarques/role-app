@@ -10,6 +10,9 @@ import com.example.projetorole.network.toModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import com.example.projetorole.network.CheckInDTO
+import com.example.projetorole.network.CheckInRequest
+import com.example.projetorole.network.postRemote
 
 class EventoNetworkRepository : EventoRepository {
 
@@ -28,4 +31,24 @@ class EventoNetworkRepository : EventoRepository {
             throw IllegalStateException(response.message)
         }
     }
+
+    override suspend fun checkIn(
+        eventId: Int,
+        latitude: Double,
+        longitude: Double
+    ): ApiResponse<CheckInDTO> {
+
+        return safeRemoteCall {
+
+            val requestBody = CheckInRequest(
+                latitude = latitude,
+                longitude = longitude
+            )
+
+            val path = "/api/eventos/$eventId/checkin"
+
+            postRemote(path, requestBody)
+        }
+    }
+
 }

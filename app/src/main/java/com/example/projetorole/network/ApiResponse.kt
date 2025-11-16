@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.serialization.InternalSerializationApi::class)
+
 package com.example.projetorole.network
 
 import kotlinx.serialization.Serializable
@@ -96,5 +98,23 @@ data class EventoUpsertRequestNetwork(
     val horario: String,
     val pago: Boolean,
     val preco: Double? = null,
-    val descricao: String? = null
+    val descricao: String? = null,
+    val latitude: Double,
+    val longitude: Double
+)
+
+@Serializable
+data class CheckInRequest(
+    val latitude: Double,
+    val longitude: Double
+)
+
+
+@Serializable
+data class CheckInDTO(
+    val id: Int,
+    val userId: Int,
+    val eventoId: Int,
+    val validatedAt: String?,
+    val createdAt: String
 )

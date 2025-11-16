@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "message": "Conta criada com sucesso",
+  "data": {
+    "id": 2,
+    "email": "teste2@usuario.com",
+    "nome": "Usuario de Teste 2"
+  }
+}

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.lang.Exception
 
 data class EventFormUiState(
     val nome: String = "",
@@ -19,10 +20,14 @@ data class EventFormUiState(
     val pago: Boolean = false,
     val preco: String = "",
     val descricao: String = "",
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val isLocationSet: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
     val success: Boolean = false,
     val isEdit: Boolean = false
+
 )
 
 private val horarioIsoRegex = Regex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}\$")
@@ -79,6 +84,14 @@ class EventFormViewModel(
     fun onPrecoChange(value: String) { _uiState.value = _uiState.value.copy(preco = value) }
     fun onDescricaoChange(value: String) { _uiState.value = _uiState.value.copy(descricao = value) }
 
+    fun onLocationChange(lat: Double, lon: Double) {
+        _uiState.value = _uiState.value.copy(
+            latitude = lat,
+            longitude = lon,
+            isLocationSet = true
+        )
+    }
+
     suspend fun submit() {
         val state = _uiState.value
         val trimmedNome = state.nome.trim()
@@ -86,6 +99,11 @@ class EventFormViewModel(
         val dataTexto = state.data.trim()
         val horarioTexto = state.horario.trim()
         val precoTexto = state.preco.trim()
+
+        if (!state.isEdit && !state.isLocationSet) {
+            _uiState.value = state.copy(error = "Por favor, defina a localização do evento")
+            return
+        }
 
         if (dataTexto.isBlank() || horarioTexto.isBlank()) {
             _uiState.value = state.copy(error = "Preencha data e horário")
@@ -117,8 +135,11 @@ class EventFormViewModel(
             horario = isoHorario,
             pago = state.pago,
             preco = preco,
-            descricao = state.descricao.takeIf { it.isNotBlank() }
+            descricao = state.descricao.takeIf { it.isNotBlank() },
+            latitude = state.latitude,
+            longitude = state.longitude
         )
+
         val result = if (editingId != null) {
             runCatching { repository.atualizarEvento(editingId!!, request) }
         } else {

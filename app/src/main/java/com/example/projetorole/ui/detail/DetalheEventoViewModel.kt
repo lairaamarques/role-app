@@ -10,6 +10,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+sealed class CheckInUiState {
+    object Idle : CheckInUiState()
+    object Loading : CheckInUiState()
+    object Success : CheckInUiState()
+    data class Error(val message: String) : CheckInUiState()
+}
+
 class DetalheEventoViewModel(
     private val repository: EventoRepository = EventoNetworkRepository()
 ) : ViewModel() {
@@ -20,22 +27,62 @@ class DetalheEventoViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _isCheckedIn = MutableStateFlow(false)
-    val isCheckedIn: StateFlow<Boolean> = _isCheckedIn.asStateFlow()
-
     fun loadEvento(eventoId: Int) {
         viewModelScope.launch {
             _isLoading.value = true
-            val lista = repository.getEventos()
-            _evento.value = lista.find { it.id == eventoId }
+            try{
+                val lista = repository.getEventos()
+                _evento.value = lista.find { it.id == eventoId }
+            }
+            catch (e: Exception){
+
+            }
             _isLoading.value = false
         }
     }
+    private val _checkInState = MutableStateFlow<CheckInUiState>(CheckInUiState.Idle)
+    val checkInState = _checkInState.asStateFlow()
 
-    fun fazerCheckin() {
-        _evento.value?.let { atual ->
-            _isCheckedIn.value = true
-            _evento.value = atual.copy(checkIns = atual.checkIns + 1)
+    fun performCheckIn(
+
+        latitude: Double,
+        longitude: Double
+    ) {
+
+        val eventoAtual = _evento.value
+        if (eventoAtual == null) {
+            _checkInState.value = CheckInUiState.Error("Evento não carregado.")
+            return
         }
+
+        viewModelScope.launch {
+            _checkInState.value = CheckInUiState.Loading
+
+            try {
+                val response = repository.checkIn(
+                    eventId = eventoAtual.id,
+                    latitude = latitude,
+                    longitude = longitude
+                )
+
+                if (response.success && response.data != null) {
+                    _checkInState.value = CheckInUiState.Success
+
+                    _evento.value = eventoAtual.copy(checkIns = eventoAtual.checkIns + 1)
+
+                } else {
+
+                    _checkInState.value = CheckInUiState.Error(response.message)
+                }
+
+            } catch (e: Exception) {
+
+                _checkInState.value = CheckInUiState.Error(e.message ?: "Falha na comunicação")
+            }
+        }
+    }
+
+    fun resetCheckInState() {
+        _checkInState.value = CheckInUiState.Idle
     }
 }

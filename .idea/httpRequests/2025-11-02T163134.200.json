@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "message": "Login realizado",
+  "data": {
+    "token": "e657e2e0-c3a1-413c-9f33-c577bed5c54b",
+    "estabelecimento": {
+      "id": 2,
+      "email": "contato@teatroamazonas.com",
+      "nomeFantasia": "Teatro Amazonas Eventos"
+    }
+  }
+}
