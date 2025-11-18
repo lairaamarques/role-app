@@ -64,7 +64,9 @@ data class CupomResponse(
     val titulo: String,
     val descricao: String,
     val local: String,
-    val disponivel: Boolean
+    val disponivel: Boolean,
+    val estabelecimentoId: Int,
+    val estabelecimentoNome: String?
 )
 
 @Serializable

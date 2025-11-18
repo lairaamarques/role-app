@@ -1,15 +1,15 @@
 package com.example.projetorole.ui.conta
 
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -31,7 +31,8 @@ import com.example.projetorole.R
 fun ContaScreen(
     isEstabelecimento: Boolean,
     onManageEvents: () -> Unit,
-    contaViewModel: ContaViewModel = ContaViewModel()
+    onCuponsClick: () -> Unit,
+    contaViewModel: ContaViewModel
 ) {
     val usuario by contaViewModel.usuario.collectAsState()
     val diasAgenda by contaViewModel.diasAgenda.collectAsState()
@@ -52,11 +53,9 @@ fun ContaScreen(
 
         Spacer(Modifier.height(48.dp))
 
-
         EstatisticasSection(usuario = usuario)
 
         Spacer(Modifier.height(48.dp))
-
 
         AgendaSection(dias = diasAgenda)
 
@@ -65,11 +64,11 @@ fun ContaScreen(
         MenuSection(
             showManageEvents = isEstabelecimento,
             onManageEvents = onManageEvents,
-            onLogout = contaViewModel::logout
+            onLogout = contaViewModel::logout,
+            onCuponsClick = onCuponsClick
         )
 
-        Spacer(Modifier.height(16.dp))
-
+        Spacer(Modifier.height(32.dp))
     }
 }
 
@@ -201,7 +200,8 @@ private fun DiaAgendaCard(dia: DiaAgenda) {
 private fun MenuSection(
     showManageEvents: Boolean,
     onManageEvents: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onCuponsClick: () -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -211,10 +211,19 @@ private fun MenuSection(
             icon = Icons.Default.Favorite,
             text = "Locais Favoritos"
         )
+
+        Box(modifier = Modifier.clickable { onCuponsClick() }) {
+            MenuItem(
+                icon = Icons.Default.Star,
+                text = if (showManageEvents) "Gerenciar Cupons" else "Meus Cupons"
+            )
+        }
+
         MenuItem(
             icon = Icons.Default.Info,
             text = "Minhas informações"
         )
+
         if (showManageEvents) {
             Button(
                 onClick = onManageEvents,
@@ -224,6 +233,7 @@ private fun MenuSection(
                 Text("Gerenciar eventos", color = Color(0xFF090040))
             }
         }
+
         Button(
             onClick = onLogout,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF471396)),

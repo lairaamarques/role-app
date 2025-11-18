@@ -31,7 +31,9 @@ data class CupomNetwork(
     val titulo: String,
     val descricao: String,
     val local: String,
-    val disponivel: Boolean
+    val disponivel: Boolean,
+    val estabelecimentoId: Int,
+    val estabelecimentoNome: String?
 )
 
 @Serializable
@@ -117,4 +119,12 @@ data class CheckInDTO(
     val eventoId: Int,
     val validatedAt: String?,
     val createdAt: String
+)
+
+@Serializable
+data class CupomRequest(
+    val titulo: String,
+    val descricao: String,
+    val local: String,
+    val disponivel: Boolean
 )

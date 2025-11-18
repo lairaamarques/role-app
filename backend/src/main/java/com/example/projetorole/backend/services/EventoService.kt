@@ -51,7 +51,7 @@ object EventoService {
             it[horario] = horarioSanitizado
             it[pago] = request.pago
             it[preco] = request.preco
-            it[descricao] = request.descricao // Adicionado salvamento da descricao
+            it[descricao] = request.descricao
             it[estabelecimento] = EntityID(establishmentId, EstabelecimentosTable)
 
             it[latitude] = request.latitude
@@ -179,4 +179,6 @@ object EventoService {
         estabelecimentoId = this[EventosTable.estabelecimento]?.value,
         estabelecimentoNome = this.getOrNull(EstabelecimentosTable.nomeFantasia)
     )
+
+
 }

@@ -40,7 +40,8 @@ import com.example.projetorole.ui.manage.MyEventsScreen
 import com.example.projetorole.ui.manage.MyEventsViewModel
 import com.example.projetorole.ui.salvos.CheckinsSalvosScreen
 import com.example.projetorole.ui.salvos.CheckinsSalvosViewModel
-import com.example.projetorole.ui.conta.ContaScreen
+import com.example.projetorole.ui.cupons.CupomFormScreen
+import com.example.projetorole.ui.cupons.CupomFormViewModel
 
 @Composable
 fun NavGraph() {
@@ -107,7 +108,25 @@ fun NavGraph() {
                         ContaScreen(
                             isEstabelecimento = true,
                             onManageEvents = { navController.navigate("myEvents") },
+                            onCuponsClick = { navController.navigate("cupons") },
                             contaViewModel = ContaViewModel(navController)
+                        )
+                    }
+
+                    composable("cupons") {
+                        CuponsScreen(
+                            isEstabelecimento = true,
+                            onCreateCupom = {
+                                navController.navigate("cupomForm")
+                            }
+                        )
+                    }
+
+                    composable("cupomForm") {
+                        val cupomViewModel: com.example.projetorole.ui.cupons.CupomFormViewModel = viewModel()
+                        com.example.projetorole.ui.cupons.CupomFormScreen(
+                            viewModel = cupomViewModel,
+                            onBack = { navController.popBackStack() }
                         )
                     }
 
@@ -196,12 +215,20 @@ fun NavGraph() {
                         )
                     }
 
-                    composable("cupons") { CuponsScreen() }
-
+                    composable("cupons") {
+                        val isEstab = actorType == ActorType.ESTAB
+                        CuponsScreen(
+                            isEstabelecimento = isEstab,
+                            onCreateCupom = {
+                                navController.navigate("cupomForm")
+                            }
+                        )
+                    }
                     composable("profile") {
                         ContaScreen(
                             isEstabelecimento = false,
                             onManageEvents = {},
+                            onCuponsClick = { navController.navigate("cupons") },
                             contaViewModel = ContaViewModel(navController)
                         )
                     }

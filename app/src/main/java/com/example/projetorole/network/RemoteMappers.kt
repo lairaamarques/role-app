@@ -20,6 +20,6 @@ fun CupomNetwork.toModel(): Cupom = Cupom(
     id = id,
     titulo = "🎫 $titulo",
     descricao = descricao,
-    local = local,
+    local = estabelecimentoNome ?: local,
     disponivel = disponivel
 )

@@ -1,53 +1,79 @@
 package com.example.projetorole.backend.routes
 
 import com.example.projetorole.backend.models.ApiResponse
-import com.example.projetorole.backend.models.CupomResponse
-import com.example.projetorole.backend.models.CuponsTable
+import com.example.projetorole.backend.models.CupomRequest
+import com.example.projetorole.backend.security.SubjectType
 import com.example.projetorole.backend.security.ensureAuthenticated
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.call
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import com.example.projetorole.backend.services.CupomService
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 
 fun Route.configureCupomRoutes() {
+
     route("/api/cupons") {
 
         get {
             if (call.ensureAuthenticated() == null) return@get
-            val cupons = transaction {
-                CuponsTable.selectAll().map { row ->
-                    CupomResponse(
-                        id = row[CuponsTable.id].value,
-                        titulo = row[CuponsTable.titulo],
-                        descricao = row[CuponsTable.descricao],
-                        local = row[CuponsTable.local],
-                        disponivel = row[CuponsTable.disponivel]
-                    )
-                }
+
+            try {
+                val cupons = CupomService.listarCupons()
+                call.respond(ApiResponse(true, "Cupons carregados", cupons))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, ApiResponse<Unit>(false, "Erro ao buscar cupons: ${e.message}"))
             }
-            call.respond(ApiResponse(success = true, message = "Cupons carregados", data = cupons))
         }
 
         post {
-            if (call.ensureAuthenticated() == null) return@post
-            call.respond(HttpStatusCode.NotImplemented, ApiResponse<Unit>(false, "Ainda não implementado"))
+            val principal = call.ensureAuthenticated() ?: return@post
+
+            if (principal.subjectType != SubjectType.ESTAB) {
+                call.respond(HttpStatusCode.Forbidden, ApiResponse<Unit>(false, "Apenas estabelecimentos podem criar cupons"))
+                return@post
+            }
+
+            val request = runCatching { call.receive<CupomRequest>() }.getOrElse {
+                call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, "Payload inválido"))
+                return@post
+            }
+
+            try {
+                val novoCupom = CupomService.criarCupom(request, principal.subjectId)
+                call.respond(HttpStatusCode.Created, ApiResponse(true, "Cupom criado!", novoCupom))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, ApiResponse<Unit>(false, "Erro ao criar cupom: ${e.message}"))
+            }
         }
 
         put("/{id}") {
             if (call.ensureAuthenticated() == null) return@put
-            call.respond(HttpStatusCode.NotImplemented, ApiResponse<Unit>(false, "Ainda não implementado"))
+            call.respond(HttpStatusCode.NotImplemented, ApiResponse<Unit>(false, "Edição ainda não implementada"))
         }
 
         delete("/{id}") {
-            if (call.ensureAuthenticated() == null) return@delete
-            call.respond(HttpStatusCode.NotImplemented, ApiResponse<Unit>(false, "Ainda não implementado"))
+
+            val principal = call.ensureAuthenticated() ?: return@delete
+
+            if (principal.subjectType != SubjectType.ESTAB) {
+                call.respond(HttpStatusCode.Forbidden, ApiResponse<Unit>(false, "Apenas estabelecimentos podem gerenciar cupons"))
+                return@delete
+            }
+
+            val id = call.parameters["id"]?.toIntOrNull()
+            if (id == null) {
+                call.respond(HttpStatusCode.BadRequest, ApiResponse<Unit>(false, "ID inválido"))
+                return@delete
+            }
+
+            val deletou = CupomService.deletarCupom(id, principal.subjectId)
+
+            if (deletou) {
+                call.respond(ApiResponse<Unit>(true, "Cupom removido com sucesso"))
+            } else {
+                call.respond(HttpStatusCode.NotFound, ApiResponse<Unit>(false, "Cupom não encontrado ou você não tem permissão"))
+            }
         }
     }
 }

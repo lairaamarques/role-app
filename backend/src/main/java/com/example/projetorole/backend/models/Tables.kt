@@ -42,6 +42,7 @@ object CuponsTable : IntIdTable("cupons") {
     val descricao = text("descricao")
     val local = varchar("local", 255)
     val disponivel = bool("disponivel").default(true)
+    val estabelecimento = reference("estabelecimento_id", EstabelecimentosTable)
 }
 object CheckIns : IntIdTable("check_ins"){
     val userId = reference("user_id", Users.id)
@@ -49,3 +50,4 @@ object CheckIns : IntIdTable("check_ins"){
     val validatedAt = datetime("validated_at").nullable()
     val createdAt = datetime("created_at").default(LocalDateTime.now())
 }
+

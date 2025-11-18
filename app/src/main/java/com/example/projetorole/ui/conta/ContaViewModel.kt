@@ -29,7 +29,7 @@ class ContaViewModel(private val navController: NavHostController? = null) : Vie
         Usuario(
             nome = "Usuário Rolê",
             email = "",
-            checkinsRealizados = 152,
+            checkinsRealizados = 7,
             checkinsSalvos = 1
         )
     )
