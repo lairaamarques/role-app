@@ -1,0 +1,16 @@
+{
+  "success": true,
+  "message": "Evento criado",
+  "data": {
+    "id": 1,
+    "nome": "Show de Teste no Teatro",
+    "local": "Teatro Amazonas, Manaus",
+    "horario": "2025-12-25T20:00",
+    "checkIns": 0,
+    "pago": true,
+    "preco": 50.0,
+    "descricao": "Um show incrível para testar a API.",
+    "estabelecimentoNome": "Teatro Amazonas Eventos",
+    "estabelecimentoId": 2
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "message": "Login realizado",
+  "data": {
+    "token": "efd14534-6c6b-4b42-919f-a8adf7b2fe6c",
+    "usuario": {
+      "id": 1,
+      "email": "teste@usuario.com",
+      "nome": "Usuario de Teste"
+    }
+  }
+}
