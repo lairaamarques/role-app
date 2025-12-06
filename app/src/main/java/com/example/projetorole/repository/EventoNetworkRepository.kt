@@ -3,16 +3,16 @@ package com.example.projetorole.repository
 import com.example.projetorole.data.model.Evento
 import com.example.projetorole.data.repository.EventoRepository
 import com.example.projetorole.network.ApiResponse
+import com.example.projetorole.network.CheckInDTO
+import com.example.projetorole.network.CheckInRequest
 import com.example.projetorole.network.EventoNetwork
 import com.example.projetorole.network.getRemote
+import com.example.projetorole.network.postRemote
 import com.example.projetorole.network.safeRemoteCall
 import com.example.projetorole.network.toModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
-import com.example.projetorole.network.CheckInDTO
-import com.example.projetorole.network.CheckInRequest
-import com.example.projetorole.network.postRemote
 
 class EventoNetworkRepository : EventoRepository {
 
@@ -36,19 +36,8 @@ class EventoNetworkRepository : EventoRepository {
         eventId: Int,
         latitude: Double,
         longitude: Double
-    ): ApiResponse<CheckInDTO> {
-
-        return safeRemoteCall {
-
-            val requestBody = CheckInRequest(
-                latitude = latitude,
-                longitude = longitude
-            )
-
-            val path = "/api/eventos/$eventId/checkin"
-
-            postRemote(path, requestBody)
-        }
+    ): ApiResponse<CheckInDTO> = safeRemoteCall {
+        val requestBody = CheckInRequest(latitude = latitude, longitude = longitude)
+        postRemote("/api/eventos/$eventId/checkin", requestBody)
     }
-
 }

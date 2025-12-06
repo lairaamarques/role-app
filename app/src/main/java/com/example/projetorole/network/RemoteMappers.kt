@@ -1,7 +1,7 @@
 package com.example.projetorole.network
 
-import com.example.projetorole.data.model.Cupom
 import com.example.projetorole.data.model.Evento
+import com.example.projetorole.data.model.Cupom
 
 fun EventoNetwork.toModel(): Evento = Evento(
     id = id,
@@ -13,13 +13,22 @@ fun EventoNetwork.toModel(): Evento = Evento(
     preco = preco,
     descricao = descricao,
     estabelecimentoId = estabelecimentoId,
-    estabelecimentoNome = estabelecimentoNome
+    estabelecimentoNome = estabelecimentoNome,
+    latitude = latitude,
+    longitude = longitude,
+    cupomTitulo = cupomTitulo,
+    cupomDescricao = cupomDescricao,
+    cupomCheckinsNecessarios = cupomCheckinsNecessarios,
+    paymentLink = paymentLink,
+    imageUrl = imageUrl?.let { if (it.startsWith("/")) ApiClient.BASE_URL + it else it }
 )
 
-fun CupomNetwork.toModel(): Cupom = Cupom(
+fun CupomUsuarioNetwork.toModel(): Cupom = Cupom(
     id = id,
-    titulo = "🎫 $titulo",
+    eventoId = eventoId,
+    titulo = titulo,
     descricao = descricao,
-    local = estabelecimentoNome ?: local,
-    disponivel = disponivel
+    estabelecimentoNome = estabelecimentoNome,
+    usado = usado,
+    dataResgate = dataResgate
 )

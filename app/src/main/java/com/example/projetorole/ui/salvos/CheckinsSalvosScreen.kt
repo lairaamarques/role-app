@@ -1,5 +1,6 @@
 package com.example.projetorole.ui.salvos
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -90,7 +91,7 @@ fun CheckinsSalvosScreen(
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(checkinsSalvosFiltrados) { evento ->
+                items(checkinsSalvosFiltrados, key = { it.id }) { evento ->
                     CheckinSalvoCard(
                         evento = evento,
                         onClick = { onEventoClick(evento) },
@@ -106,10 +107,11 @@ fun CheckinsSalvosScreen(
 private fun CheckinSalvoCard(
     evento: Evento,
     onClick: () -> Unit,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
@@ -117,13 +119,14 @@ private fun CheckinSalvoCard(
             contentDescription = "Favorito",
             modifier = Modifier.size(60.dp)
         )
-        
+
         Spacer(Modifier.width(12.dp))
-        
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onClick() },
+                .clickable { onClick() }
+                .animateContentSize(), // use stable animateContentSize()
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFECE6F0))
         ) {

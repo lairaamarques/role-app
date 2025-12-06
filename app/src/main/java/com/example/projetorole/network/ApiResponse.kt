@@ -3,6 +3,7 @@
 package com.example.projetorole.network
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 @Serializable
 data class ApiResponse<T>(
@@ -18,22 +19,63 @@ data class EventoNetwork(
     val local: String,
     val horario: String,
     val checkIns: Int,
-    val pago: Boolean,
+    @SerialName("paid")
+    val pago: Boolean = false,
     val preco: Double? = null,
     val descricao: String? = null,
     val estabelecimentoId: Int? = null,
-    val estabelecimentoNome: String? = null
+    val estabelecimentoNome: String? = null,
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val cupomTitulo: String? = null,
+    val cupomDescricao: String? = null,
+    val cupomCheckinsNecessarios: Int = 1,
+    val paymentLink: String? = null,
+    val imageUrl: String? = null
 )
 
 @Serializable
-data class CupomNetwork(
+data class CupomUsuarioNetwork(
     val id: Int,
+    val eventoId: Int,
     val titulo: String,
     val descricao: String,
+    val estabelecimentoNome: String? = null,
+    val usado: Boolean,
+    val dataResgate: String
+)
+
+@Serializable
+data class CheckInDTO(
+    val id: Int,
+    val userId: Int,
+    val eventoId: Int,
+    val validatedAt: String?,
+    val createdAt: String,
+    val cupomGanho: CupomUsuarioNetwork? = null
+)
+
+@Serializable
+data class CheckInRequest(
+    val latitude: Double,
+    val longitude: Double
+)
+
+@Serializable
+data class EventoUpsertRequestNetwork(
+    val nome: String,
     val local: String,
-    val disponivel: Boolean,
-    val estabelecimentoId: Int,
-    val estabelecimentoNome: String?
+    val horario: String,
+    val pago: Boolean,
+    val preco: Double? = null,
+    val descricao: String? = null,
+    val latitude: Double,
+    val longitude: Double,
+    val cupomTitulo: String? = null,
+    val cupomDescricao: String? = null,
+    val cupomCheckinsNecessarios: Int = 1,
+    val paymentLink: String? = null,
+    val imageUrl: String? = null
 )
 
 @Serializable
@@ -91,40 +133,4 @@ data class EstabelecimentoRegisterRequestNetwork(
 data class EstabelecimentoLoginRequestNetwork(
     val email: String,
     val senha: String
-)
-
-@Serializable
-data class EventoUpsertRequestNetwork(
-    val nome: String,
-    val local: String,
-    val horario: String,
-    val pago: Boolean,
-    val preco: Double? = null,
-    val descricao: String? = null,
-    val latitude: Double,
-    val longitude: Double
-)
-
-@Serializable
-data class CheckInRequest(
-    val latitude: Double,
-    val longitude: Double
-)
-
-
-@Serializable
-data class CheckInDTO(
-    val id: Int,
-    val userId: Int,
-    val eventoId: Int,
-    val validatedAt: String?,
-    val createdAt: String
-)
-
-@Serializable
-data class CupomRequest(
-    val titulo: String,
-    val descricao: String,
-    val local: String,
-    val disponivel: Boolean
 )

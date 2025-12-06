@@ -19,7 +19,12 @@ data class EventoRequest(
     val descricao: String? = null,
     val estabelecimentoId: Int? = null,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val cupomTitulo: String? = null,
+    val cupomDescricao: String? = null,
+    val cupomCheckinsNecessarios: Int = 1,
+    val paymentLink: String? = null,
+    val imageUrl: String? = null
 )
 
 @Serializable
@@ -29,11 +34,16 @@ data class EventoResponse(
     val local: String,
     val horario: String,
     val checkIns: Int,
-    val pago: Boolean,
+    val paid: Boolean,
     val preco: Double? = null,
     val descricao: String? = null,
     val estabelecimentoNome: String? = null,
-    val estabelecimentoId: Int?
+    val estabelecimentoId: Int?,
+    val cupomTitulo: String? = null,
+    val cupomDescricao: String? = null,
+    val cupomCheckinsNecessarios: Int = 1,
+    val paymentLink: String? = null,
+    val imageUrl: String? = null
 )
 
 @Serializable
@@ -138,5 +148,17 @@ data class CheckInDTO(
     val userId: Int,
     val eventoId: Int,
     val validatedAt: String?,
-    val createdAt: String
+    val createdAt: String,
+    val cupomGanho: CupomUsuarioDTO? = null
+)
+
+@Serializable
+data class CupomUsuarioDTO(
+    val id: Int,
+    val eventoId: Int,
+    val titulo: String,
+    val descricao: String,
+    val estabelecimentoNome: String? = null,
+    val usado: Boolean,
+    val dataResgate: String
 )

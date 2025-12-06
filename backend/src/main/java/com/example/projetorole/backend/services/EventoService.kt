@@ -1,29 +1,37 @@
 package com.example.projetorole.backend.services
 
 import com.example.projetorole.backend.models.EstabelecimentosTable
+import com.example.projetorole.backend.models.CuponsUsuario
+import com.example.projetorole.backend.models.CupomUsuarioDTO
 import com.example.projetorole.backend.models.EventoRequest
 import com.example.projetorole.backend.models.EventoResponse
 import com.example.projetorole.backend.models.EventosTable
+import com.example.projetorole.backend.models.Users
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.leftJoin
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import com.example.projetorole.backend.models.CheckInDTO
 import com.example.projetorole.backend.models.CheckIns
 import java.time.LocalDateTime
 
 class EventNotFoundException : Exception("Evento não encontrado.")
 class DistanceCheckException : Exception("Usuário muito longe do evento.")
+class DuplicateCheckInException : Exception("Check-in já realizado por este usuário.")
 
 object EventoService {
 
     private const val MAX_DISTANCE_IN_KILOMETERS = 0.1
+    private const val MAX_CUPOM_TITULO_CHARS = 40
+    private const val MAX_CUPOM_DESCRICAO_CHARS = 80
+
     private val eventoJoinEstabelecimento =
         EventosTable.leftJoin(
             otherTable = EstabelecimentosTable,
@@ -44,6 +52,11 @@ object EventoService {
         val nomeSanitizado = request.nome.trim()
         val localSanitizado = request.local.trim()
         val horarioSanitizado = request.horario.trim()
+        val cupomTituloSanitizado = request.cupomTitulo?.trim()?.take(MAX_CUPOM_TITULO_CHARS)
+        val cupomDescricaoSanitizado = request.cupomDescricao?.trim()?.take(MAX_CUPOM_DESCRICAO_CHARS)
+        val cupomCheckins = request.cupomCheckinsNecessarios.coerceAtLeast(1)
+        val paymentLinkSanitizado = request.paymentLink?.trim()?.takeIf { it.isNotBlank() }
+        val imageUrlSanitizado = request.imageUrl?.trim()?.takeIf { it.isNotBlank() }
 
         val insertedId = EventosTable.insert {
             it[nome] = nomeSanitizado
@@ -52,10 +65,14 @@ object EventoService {
             it[pago] = request.pago
             it[preco] = request.preco
             it[descricao] = request.descricao
+            it[cupomCheckinsNecessarios] = cupomCheckins
             it[estabelecimento] = EntityID(establishmentId, EstabelecimentosTable)
-
             it[latitude] = request.latitude
             it[longitude] = request.longitude
+            it[cupomTitulo] = cupomTituloSanitizado
+            it[cupomDescricao] = cupomDescricaoSanitizado
+            it[paymentLink] = paymentLinkSanitizado
+            it[imageUrl] = imageUrlSanitizado
         } get EventosTable.id
 
         eventoJoinEstabelecimento
@@ -71,14 +88,13 @@ object EventoService {
     }
 
     fun atualizarEvento(id: Int, request: EventoRequest, establishmentId: Int): UpdateResult = transaction {
-        val current = EventosTable
-            .select { EventosTable.id eq id }
-            .singleOrNull() ?: return@transaction UpdateResult.NotFound
+        val row = EventosTable.select { EventosTable.id eq id }.singleOrNull()
+            ?: return@transaction UpdateResult.NotFound
 
-        val ownerId = current[EventosTable.estabelecimento]?.value
-        if (ownerId == null || ownerId != establishmentId) {
-            return@transaction UpdateResult.Forbidden
-        }
+        val ownerId = row[EventosTable.estabelecimento]?.value
+        if (ownerId == null || ownerId != establishmentId) return@transaction UpdateResult.Forbidden
+
+        val paymentLinkSanitizado = request.paymentLink?.trim()?.takeIf { it.isNotBlank() }
 
         EventosTable.update({ EventosTable.id eq id }) {
             it[nome] = request.nome.trim()
@@ -87,14 +103,16 @@ object EventoService {
             it[pago] = request.pago
             it[preco] = request.preco
             it[descricao] = request.descricao
+            it[latitude] = request.latitude
+            it[longitude] = request.longitude
+            it[cupomTitulo] = request.cupomTitulo?.trim()?.take(MAX_CUPOM_TITULO_CHARS)
+            it[cupomDescricao] = request.cupomDescricao?.trim()?.take(MAX_CUPOM_DESCRICAO_CHARS)
+            it[cupomCheckinsNecessarios] = request.cupomCheckinsNecessarios.coerceAtLeast(1)
+            it[paymentLink] = paymentLinkSanitizado
         }
 
-        val updated = eventoJoinEstabelecimento
-            .select { EventosTable.id eq id }
-            .single()
-            .toEventoResponse()
-
-        UpdateResult.Success(updated)
+        val updatedRow = eventoJoinEstabelecimento.select { EventosTable.id eq id }.single()
+        UpdateResult.Success(updatedRow.toEventoResponse())
     }
 
     sealed class DeleteResult {
@@ -104,11 +122,10 @@ object EventoService {
     }
 
     fun removerEvento(id: Int, establishmentId: Int): DeleteResult = transaction {
-        val current = EventosTable
-            .select { EventosTable.id eq id }
-            .singleOrNull() ?: return@transaction DeleteResult.NotFound
+        val row = EventosTable.select { EventosTable.id eq id }.singleOrNull()
+            ?: return@transaction DeleteResult.NotFound
 
-        val ownerId = current[EventosTable.estabelecimento]?.value
+        val ownerId = row[EventosTable.estabelecimento]?.value
         if (ownerId == null || ownerId != establishmentId) {
             return@transaction DeleteResult.Forbidden
         }
@@ -123,40 +140,50 @@ object EventoService {
         userLatitude: Double,
         userLongitude: Double
     ): CheckInDTO = transaction {
+        val eventRow = eventoJoinEstabelecimento
+            .select { EventosTable.id eq eventId }
+            .singleOrNull() ?: throw EventNotFoundException()
 
-        val event = EventosTable.select { EventosTable.id eq eventId }
-            .firstOrNull() ?: throw EventNotFoundException()
+        val existing = CheckIns.select {
+            (CheckIns.userId eq EntityID(userIdParam, Users)) and
+            (CheckIns.eventoId eq EntityID(eventId, EventosTable))
+        }.singleOrNull()
 
-        val eventLatitude = event[EventosTable.latitude]
-        val eventLongitude = event[EventosTable.longitude]
+        if (existing != null) {
+            throw DuplicateCheckInException()
+        }
+
+        val eventLatitude = eventRow[EventosTable.latitude]
+        val eventLongitude = eventRow[EventosTable.longitude]
 
         val distance = DistanceCalculator.calculate(
-            userLatitude, userLongitude,
-            eventLatitude, eventLongitude
+            userLatitude, userLongitude, eventLatitude, eventLongitude
         )
 
-        if (distance > MAX_DISTANCE_IN_KILOMETERS) {
-            throw DistanceCheckException()
-        }
+        if (distance > MAX_DISTANCE_IN_KILOMETERS) throw DistanceCheckException()
 
-        val newCheckIn = CheckIns.insert {
-            it[userId] = userIdParam
-            it[CheckIns.eventoId] = eventId
+        val insertId = CheckIns.insert {
+            it[userId] = EntityID(userIdParam, Users)
+            it[eventoId] = EntityID(eventId, EventosTable)
             it[validatedAt] = LocalDateTime.now()
-            it[createdAt] = LocalDateTime.now()
-        }
+        } get CheckIns.id
 
-        val novoTotal = event[EventosTable.checkIns] + 1
+        val novoTotal = eventRow[EventosTable.checkIns] + 1
         EventosTable.update({ EventosTable.id eq eventId }) {
             it[checkIns] = novoTotal
         }
 
-        return@transaction CheckInDTO(
-            id = newCheckIn[CheckIns.id].value,
-            userId = newCheckIn[CheckIns.userId].value,
-            eventoId = newCheckIn[CheckIns.eventoId].value,
-            validatedAt = newCheckIn[CheckIns.validatedAt]?.toString(),
-            createdAt = newCheckIn[CheckIns.createdAt].toString()
+        val cupomGanho = verificarEConcederCupom(userIdParam, eventId, eventRow)
+
+        val created = CheckIns.select { CheckIns.id eq insertId }.single()
+
+        CheckInDTO(
+            id = created[CheckIns.id].value,
+            userId = created[CheckIns.userId].value,
+            eventoId = created[CheckIns.eventoId].value,
+            validatedAt = created[CheckIns.validatedAt]?.toString(),
+            createdAt = created[CheckIns.createdAt].toString(),
+            cupomGanho = cupomGanho
         )
     }
 
@@ -167,17 +194,63 @@ object EventoService {
             .map { it.toEventoResponse() }
     }
 
+    private fun verificarEConcederCupom(
+        userId: Int,
+        eventId: Int,
+        event: ResultRow
+    ): CupomUsuarioDTO? {
+        val titulo = event[EventosTable.cupomTitulo] ?: return null
+        val descricao = event[EventosTable.cupomDescricao] ?: return null
+        val checkinsNecessarios = event[EventosTable.cupomCheckinsNecessarios].coerceAtLeast(1)
+
+        val jaGanhou = CuponsUsuario.select {
+            (CuponsUsuario.userId eq EntityID(userId, Users)) and (CuponsUsuario.eventoId eq EntityID(eventId, EventosTable))
+        }.singleOrNull() != null
+
+        if (jaGanhou) return null
+
+        val totalCheckinsUsuario = CheckIns.select { CheckIns.userId eq EntityID(userId, Users) }.count()
+
+        if (totalCheckinsUsuario < checkinsNecessarios) return null
+
+        val insertId = CuponsUsuario.insert {
+            it[CuponsUsuario.userId] = EntityID(userId, Users)
+            it[CuponsUsuario.eventoId] = EntityID(eventId, EventosTable)
+            it[CuponsUsuario.titulo] = titulo
+            it[CuponsUsuario.descricao] = descricao
+            it[CuponsUsuario.usado] = false
+            it[CuponsUsuario.dataResgate] = LocalDateTime.now()
+        } get CuponsUsuario.id
+
+        val estabelecimentoNome = event.getOrNull(EstabelecimentosTable.nomeFantasia)
+
+        return CupomUsuarioDTO(
+            id = insertId.value,
+            eventoId = eventId,
+            titulo = titulo,
+            descricao = descricao,
+            estabelecimentoNome = estabelecimentoNome,
+            usado = false,
+            dataResgate = LocalDateTime.now().toString()
+        )
+    }
+
     private fun ResultRow.toEventoResponse(checkInsOverride: Int? = null) = EventoResponse(
         id = this[EventosTable.id].value,
         nome = this[EventosTable.nome],
         local = this[EventosTable.local],
         horario = this[EventosTable.horario],
         checkIns = checkInsOverride ?: this[EventosTable.checkIns],
-        pago = this[EventosTable.pago],
+        paid = this[EventosTable.pago],
         preco = this[EventosTable.preco],
         descricao = this[EventosTable.descricao],
         estabelecimentoId = this[EventosTable.estabelecimento]?.value,
-        estabelecimentoNome = this.getOrNull(EstabelecimentosTable.nomeFantasia)
+        estabelecimentoNome = this.getOrNull(EstabelecimentosTable.nomeFantasia),
+        cupomTitulo = this[EventosTable.cupomTitulo],
+        cupomDescricao = this[EventosTable.cupomDescricao],
+        cupomCheckinsNecessarios = this[EventosTable.cupomCheckinsNecessarios],
+        paymentLink = this[EventosTable.paymentLink],
+        imageUrl = this[EventosTable.imageUrl]
     )
 
 

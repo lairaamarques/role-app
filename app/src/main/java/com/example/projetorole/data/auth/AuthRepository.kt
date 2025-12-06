@@ -26,7 +26,7 @@ object AuthRepository {
     private val _authEvents = MutableSharedFlow<AuthEvent>(extraBufferCapacity = 1)
     val authEvents: SharedFlow<AuthEvent> = _authEvents.asSharedFlow()
 
-    data class AuthProfile(val displayName: String?, val email: String?)
+    data class AuthProfile(val displayName: String?, val email: String?, val photoUrl: String?)
 
     private val _profile = MutableStateFlow<AuthProfile?>(null)
     val profile: StateFlow<AuthProfile?> = _profile.asStateFlow()
@@ -43,29 +43,29 @@ object AuthRepository {
                 launch { dataStore.tokenFlow.collect { _token.value = it } }
                 launch { dataStore.actorTypeFlow.collect { _actorType.value = it } }
                 launch { dataStore.profileFlow.collect { data ->
-                    _profile.value = data?.let { AuthProfile(it.displayName, it.email) }
+                    _profile.value = data?.let { AuthProfile(it.displayName, it.email, it.photoUrl) }
                 } }
             }
             initialized = true
         }
     }
 
-    suspend fun setSession(token: String?, actorType: ActorType?, displayName: String?, email: String?) {
+    suspend fun setSession(token: String?, actorType: ActorType?, displayName: String?, email: String?, photoUrl: String? = null) {
         ensureInitialized()
-        _profile.value = AuthProfile(displayName, email)
-        dataStore.setSession(token, actorType, displayName, email)
+        _profile.value = AuthProfile(displayName, email, photoUrl)
+        dataStore.setSession(token, actorType, displayName, email, photoUrl)
     }
 
     suspend fun setToken(token: String?) {
         ensureInitialized()
         val currentProfile = _profile.value
-        dataStore.setSession(token, _actorType.value, currentProfile?.displayName, currentProfile?.email)
+        dataStore.setSession(token, _actorType.value, currentProfile?.displayName, currentProfile?.email, currentProfile?.photoUrl)
     }
 
     suspend fun clearToken() {
         ensureInitialized()
         _profile.value = null
-        dataStore.setSession(null, null, null, null)
+        dataStore.setSession(null, null, null, null, null)
     }
 
     val currentToken: String? get() = _token.value

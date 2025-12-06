@@ -18,12 +18,15 @@ class AuthDataStore(context: Context) {
         val ACTOR = stringPreferencesKey("auth_actor_type")
         val DISPLAY_NAME = stringPreferencesKey("auth_display_name")
         val EMAIL = stringPreferencesKey("auth_email")
+        val PHOTO_URL = stringPreferencesKey("auth_photo_url")
     }
 
     val profileFlow: Flow<AuthProfileData?> = dataStore.data.map { prefs ->
         val name = prefs[Keys.DISPLAY_NAME]
         val email = prefs[Keys.EMAIL]
-        if (name.isNullOrBlank() && email.isNullOrBlank()) null else AuthProfileData(name, email)
+        val photo = prefs[Keys.PHOTO_URL]
+        if (name.isNullOrBlank() && email.isNullOrBlank() && photo.isNullOrBlank()) null
+        else AuthProfileData(name, email, photo)
     }
 
     val tokenFlow: Flow<String?> = dataStore.data.map { it[Keys.TOKEN] }
@@ -31,14 +34,15 @@ class AuthDataStore(context: Context) {
         prefs[Keys.ACTOR]?.let { runCatching { ActorType.valueOf(it) }.getOrNull() }
     }
 
-    suspend fun setSession(token: String?, actorType: ActorType?, displayName: String?, email: String?) {
+    suspend fun setSession(token: String?, actorType: ActorType?, displayName: String?, email: String?, photoUrl: String? = null) {
         dataStore.edit { prefs ->
             if (token.isNullOrBlank()) prefs.remove(Keys.TOKEN) else prefs[Keys.TOKEN] = token
             if (actorType == null) prefs.remove(Keys.ACTOR) else prefs[Keys.ACTOR] = actorType.name
             if (displayName.isNullOrBlank()) prefs.remove(Keys.DISPLAY_NAME) else prefs[Keys.DISPLAY_NAME] = displayName
             if (email.isNullOrBlank()) prefs.remove(Keys.EMAIL) else prefs[Keys.EMAIL] = email
+            if (photoUrl.isNullOrBlank()) prefs.remove(Keys.PHOTO_URL) else prefs[Keys.PHOTO_URL] = photoUrl
         }
     }
 }
 
-data class AuthProfileData(val displayName: String?, val email: String?)
+data class AuthProfileData(val displayName: String?, val email: String?, val photoUrl: String?)

@@ -57,11 +57,14 @@ class LoginUsuarioViewModel : ViewModel() {
             result.onSuccess { response ->
                 val data = response.data
                 if (response.success && data != null) {
+                    val rawPhoto = data.usuario.fotoUrl
+                    val photoUrl = rawPhoto?.let { if (it.startsWith("/")) ApiClient.BASE_URL + it else it }
                     AuthRepository.setSession(
                         token = data.token,
                         actorType = ActorType.USER,
                         displayName = data.usuario.nome,
-                        email = data.usuario.email
+                        email = data.usuario.email,
+                        photoUrl = photoUrl
                     )
                     _uiState.update { it.copy(isLoading = false, success = true) }
                 } else {

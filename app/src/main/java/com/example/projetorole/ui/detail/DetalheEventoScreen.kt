@@ -1,17 +1,22 @@
 package com.example.projetorole.ui.detail
 
-import android.Manifest // Para as permissões
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
 
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -26,24 +31,40 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext // Import para o Context
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
-
+import com.example.projetorole.data.model.Cupom
+import com.example.projetorole.R
+import androidx.compose.ui.platform.LocalDensity
 
 @Composable
 fun DetalheEventoScreen(
     eventoId: Int,
     viewModel: DetalheEventoViewModel = viewModel(),
     onBack: () -> Unit,
-    onCheckinSuccess: () -> Unit
+    onCheckinSuccess: (Cupom?) -> Unit
 ) {
 
     val checkInState by viewModel.checkInState.collectAsState()
     val evento by viewModel.evento.collectAsState()
+    val eventoState = evento
     val isLoading by viewModel.isLoading.collectAsState()
+
+    if (checkInState is CheckInUiState.Far && eventoState != null) {
+        val ts = (checkInState as CheckInUiState.Far).timestamp
+        CheckinFarScreen(evento = eventoState, timestampMillis = ts) {
+            viewModel.resetCheckInState()
+        }
+        return
+    }
 
     val context = LocalContext.current
 
@@ -72,24 +93,23 @@ fun DetalheEventoScreen(
         viewModel.loadEvento(eventoId)
     }
 
-    when (val state = checkInState) {
-        is CheckInUiState.Loading -> {
-
-        }
-        is CheckInUiState.Success -> {
-            Toast.makeText(context, "Check-in realizado com sucesso!", Toast.LENGTH_LONG).show()
-            LaunchedEffect(Unit) {
+    LaunchedEffect(checkInState) {
+        when (val state = checkInState) {
+            is CheckInUiState.Success -> {
+                val mensagem = state.cupom?.let { "Check-in garantido! Cupom desbloqueado: ${it.titulo}" }
+                    ?: "Check-in realizado com sucesso!"
+                Toast.makeText(context, mensagem, Toast.LENGTH_LONG).show()
                 viewModel.resetCheckInState()
-                onCheckinSuccess()
+                onCheckinSuccess(state.cupom)
             }
-        }
-        is CheckInUiState.Error -> {
-            Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
-            LaunchedEffect(Unit) {
+            is CheckInUiState.Far -> {
+            }
+            is CheckInUiState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
                 viewModel.resetCheckInState()
             }
+            else -> Unit
         }
-        is CheckInUiState.Idle -> { }
     }
 
 
@@ -109,52 +129,47 @@ fun DetalheEventoScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
-                    .background(Color(0xFFE8E8E8))
             ) {
-                IconButton(
-                    onClick = onBack,
+                Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(16.dp)
+                        .padding(12.dp)
+                        .size(40.dp)
+                        .background(Color.White.copy(alpha = 0.9f), CircleShape),
                 ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Voltar",
-                        tint = Color.Black,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-
-
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .background(Color(0xFFB8B8B8), CircleShape)
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.align(Alignment.Center)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFFB8B8B8), CircleShape)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .width(50.dp)
-                                .height(40.dp)
-                                .background(Color(0xFFB8B8B8), RoundedCornerShape(8.dp))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Voltar",
+                            tint = Color.Black,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
+
+                if (!eventoState?.imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = eventoState!!.imageUrl,
+                        contentDescription = eventoState.nome,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        contentScale = ContentScale.FillWidth
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.event_placeholder),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        contentScale = ContentScale.FillWidth
+                    )
+                }
             }
+
+            Spacer(Modifier.height(8.dp))
 
             Column(
                 modifier = Modifier
@@ -221,10 +236,10 @@ fun DetalheEventoScreen(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                Icons.Default.Star,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
+                                painter = painterResource(id = R.drawable.hot_icon),
+                                contentDescription = "Bombando",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(18.dp)
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
@@ -234,31 +249,43 @@ fun DetalheEventoScreen(
                             )
                         }
 
-                        Button(
-                            onClick = {
-
-                                locationPermissionLauncher.launch(
-                                    arrayOf(
-                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                        if ((evento?.checkIns ?: 0) > 3) {
+                            val textSize = 12.sp
+                            val iconSizeDp = with(LocalDensity.current) { textSize.toDp() }
+                            val transition = rememberInfiniteTransition()
+                            val scaleAnim by transition.animateFloat(
+                                initialValue = 1f,
+                                targetValue = 1.06f,
+                                animationSpec = infiniteRepeatable(tween(durationMillis = 700))
+                            )
+                            Surface(
+                                modifier = Modifier
+                                    .height(36.dp)
+                                    .padding(start = 8.dp)
+                                    .scale(scaleAnim),
+                                shape = RoundedCornerShape(20.dp),
+                                color = Color(0xFFE04A19)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(horizontal = 12.dp)
+                                        .height(36.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.hot_icon),
+                                        contentDescription = "Bombando",
+                                        tint = Color.Unspecified,
+                                        modifier = Modifier.size(iconSizeDp)
                                     )
-                                )
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (checkInState is CheckInUiState.Success) Color(0xFF4CAF50) else Color(0xFF00C853),
-                                disabledContainerColor = Color(0xFF6750A4)
-                            ),
-                            shape = RoundedCornerShape(20.dp),
-                            modifier = Modifier.height(36.dp),
-
-                            enabled = checkInState is CheckInUiState.Idle
-                        ) {
-
-                            when (checkInState) {
-                                is CheckInUiState.Idle -> Text("● Check-in", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                is CheckInUiState.Loading -> Text("Verificando...", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                is CheckInUiState.Success -> Text("✓ Feito!", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                is CheckInUiState.Error -> Text("● Check-in!", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = "Bombando!",
+                                        color = Color.White,
+                                        fontSize = textSize,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }
@@ -332,19 +359,24 @@ fun DetalheEventoScreen(
                 }
 
                 Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = {  },
-                    modifier = Modifier
-                        .width(240.dp)
-                        .height(60.dp)
-                        .align(Alignment.CenterHorizontally),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFCC00),
-                        contentColor = Color(0xFF090040)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Comprar Ingresso", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+
+                val paymentLink = evento!!.paymentLink
+                val uriHandler = LocalUriHandler.current
+                if (!paymentLink.isNullOrBlank()) {
+                    Button(
+                        onClick = { uriHandler.openUri(paymentLink) },
+                        modifier = Modifier
+                            .width(240.dp)
+                            .height(60.dp)
+                            .align(Alignment.CenterHorizontally),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFFCC00),
+                            contentColor = Color(0xFF090040)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Comprar Ingresso", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
                 }
 
                 Spacer(Modifier.height(8.dp))
@@ -375,7 +407,50 @@ fun DetalheEventoScreen(
                         is CheckInUiState.Idle -> Text("Realizar Check-in", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         is CheckInUiState.Loading -> Text("Verificando...", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         is CheckInUiState.Success -> Text("Check-in Feito ✓", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        is CheckInUiState.Far -> Text("Longe do evento", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         is CheckInUiState.Error -> Text("Tentar Novamente", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                }
+
+                if (!evento!!.cupomTitulo.isNullOrBlank()) {
+                    Spacer(Modifier.height(24.dp))
+                    Text(
+                        text = "Recompensa do rolê",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFCC00).copy(alpha = 0.1f))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = evento!!.cupomTitulo!!,
+                                color = Color(0xFFFFCC00),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            evento!!.cupomDescricao?.let {
+                                Text(
+                                    text = it,
+                                    color = Color.White,
+                                    fontSize = 14.sp
+                                )
+                            }
+                            Text(
+                                text = "Ganhe após ${evento!!.cupomCheckinsNecessarios} check-in(s).",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
 

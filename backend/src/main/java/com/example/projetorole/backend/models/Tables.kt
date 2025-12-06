@@ -35,19 +35,26 @@ object EventosTable : IntIdTable("eventos") {
     ).nullable()
     val latitude = double("latitude").default(0.0)
     val longitude = double("longitude").default(0.0)
+    val cupomTitulo = varchar("cupom_titulo", 255).nullable()
+    val cupomDescricao = text("cupom_descricao").nullable()
+    val cupomCheckinsNecessarios = integer("cupom_checkins_necessarios").default(1)
+    val paymentLink = varchar("payment_link", 500).nullable()
+    val imageUrl = varchar("image_url", 500).nullable() // new: optional image URL for event
 }
 
-object CuponsTable : IntIdTable("cupons") {
-    val titulo = varchar("titulo", 255)
-    val descricao = text("descricao")
-    val local = varchar("local", 255)
-    val disponivel = bool("disponivel").default(true)
-    val estabelecimento = reference("estabelecimento_id", EstabelecimentosTable)
-}
 object CheckIns : IntIdTable("check_ins"){
     val userId = reference("user_id", Users.id)
     val eventoId = reference("evento_id", EventosTable.id)
     val validatedAt = datetime("validated_at").nullable()
     val createdAt = datetime("created_at").default(LocalDateTime.now())
+}
+
+object CuponsUsuario : IntIdTable("cupons_usuario") {
+    val userId = reference("user_id", Users.id)
+    val eventoId = reference("evento_id", EventosTable.id)
+    val titulo = varchar("titulo", 255)
+    val descricao = text("descricao")
+    val usado = bool("usado").default(false)
+    val dataResgate = datetime("data_resgate").default(LocalDateTime.now())
 }
 

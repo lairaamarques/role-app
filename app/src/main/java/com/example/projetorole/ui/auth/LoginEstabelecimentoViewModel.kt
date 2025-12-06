@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.projetorole.data.auth.AuthDataStore
+import android.content.Context
 
 class LoginEstabelecimentoViewModel : ViewModel() {
 
@@ -54,11 +56,14 @@ class LoginEstabelecimentoViewModel : ViewModel() {
             result.onSuccess { response ->
                 val data = response.data
                 if (response.success && data != null) {
+                    val rawPhoto = data.estabelecimento.fotoUrl
+                    val photoUrl = rawPhoto?.let { if (it.startsWith("/")) ApiClient.BASE_URL + it else it }
                     AuthRepository.setSession(
                         token = data.token,
                         actorType = ActorType.ESTAB,
                         displayName = data.estabelecimento.nomeFantasia,
-                        email = data.estabelecimento.email
+                        email = data.estabelecimento.email,
+                        photoUrl = photoUrl
                     )
                     _uiState.update { it.copy(isLoading = false, success = true) }
                 } else {

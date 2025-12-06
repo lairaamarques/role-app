@@ -3,12 +3,13 @@ package com.example.projetorole.ui.conta
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projetorole.data.auth.AuthRepository
+import com.example.projetorole.data.repository.CheckinsSalvosRepository
+import com.example.projetorole.network.CheckInDTO
+import com.example.projetorole.repository.CheckinNetworkRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import androidx.navigation.NavHostController
-import kotlinx.coroutines.delay
 
 data class Usuario(
     val nome: String,
@@ -17,39 +18,20 @@ data class Usuario(
     val checkinsSalvos: Int
 )
 
-data class DiaAgenda(
-    val dia: Int,
-    val diaSemana: String,
-    val temEvento: Boolean = true
-)
-
-class ContaViewModel(private val navController: NavHostController? = null) : ViewModel() {
+class ContaViewModel(private val navController: androidx.navigation.NavHostController? = null) : ViewModel() {
 
     private val _usuario = MutableStateFlow(
         Usuario(
             nome = "Usuário Rolê",
             email = "",
-            checkinsRealizados = 7,
-            checkinsSalvos = 1
+            checkinsRealizados = 0,
+            checkinsSalvos = 0
         )
     )
     val usuario: StateFlow<Usuario> = _usuario.asStateFlow()
 
-    private val _diasAgenda = MutableStateFlow(
-        listOf(
-            DiaAgenda(21, "DOM"),
-            DiaAgenda(22, "SEG"),
-            DiaAgenda(23, "TER"),
-            DiaAgenda(24, "QUA"),
-            DiaAgenda(25, "QUI"),
-            DiaAgenda(26, "SEX"),
-            DiaAgenda(27, "SAB"),
-            DiaAgenda(28, "DOM"),
-            DiaAgenda(29, "SEG"),
-            DiaAgenda(30, "TER")
-        )
-    )
-    val diasAgenda: StateFlow<List<DiaAgenda>> = _diasAgenda.asStateFlow()
+    private val checkinsSalvosRepo = CheckinsSalvosRepository
+    private val checkinNetworkRepo = CheckinNetworkRepository()
 
     init {
         viewModelScope.launch {
@@ -59,13 +41,44 @@ class ContaViewModel(private val navController: NavHostController? = null) : Vie
                 _usuario.value = _usuario.value.copy(nome = nome, email = email)
             }
         }
+
+        viewModelScope.launch {
+            AuthRepository.token.collect { token ->
+                if (!token.isNullOrBlank()) {
+                    carregarCheckinsRealizados()
+                } else {
+                    _usuario.value = _usuario.value.copy(checkinsRealizados = 0)
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            checkinsSalvosRepo.checkinsSalvos.collect { salvos ->
+                _usuario.value = _usuario.value.copy(checkinsSalvos = salvos.size)
+            }
+        }
+    }
+
+    fun carregarCheckinsRealizados() {
+        viewModelScope.launch {
+            val tokenSnapshot = AuthRepository.currentToken
+            if (tokenSnapshot.isNullOrBlank()) return@launch
+
+            try {
+                val lista: List<CheckInDTO> = checkinNetworkRepo.getMyCheckins()
+                if (AuthRepository.currentToken == tokenSnapshot) {
+                    _usuario.value = _usuario.value.copy(checkinsRealizados = lista.size)
+                }
+            } catch (e: Exception) {
+            }
+        }
     }
 
     fun logout() {
         viewModelScope.launch {
             try {
                 AuthRepository.clearToken()
-                delay(100)
+                kotlinx.coroutines.delay(100)
                 navController?.navigate("authOptions") {
                     popUpTo(0) { inclusive = true }
                 }

@@ -1,11 +1,14 @@
 package com.example.projetorole.ui.feed
 
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -17,29 +20,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.projetorole.data.model.Evento
 import com.example.projetorole.ui.salvos.CheckinsSalvosViewModel
-
-private val categorias = listOf(
-    "Ocorrendo hoje",
-    "Bares",
-    "Show",
-    "Festa",
-    "Restaurantes",
-    "Baladas",
-    "Karaokê",
-    "Music Bar",
-    "Teatro",
-    "Cinema"
-)
+import com.example.projetorole.R
 
 @Composable
 fun FeedScreen(
@@ -49,7 +42,6 @@ fun FeedScreen(
     val viewModel: FeedViewModel = viewModel()
     val eventos by viewModel.eventos.collectAsState()
 
-    var categoriaSelecionada by remember { mutableIntStateOf(0) }
     var textoBusca by remember { mutableStateOf("") }
 
     Column(
@@ -75,13 +67,6 @@ fun FeedScreen(
                     color = Color(0xFFFEF7FF),
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
-                )
-                Spacer(Modifier.width(8.dp))
-                Icon(
-                    Icons.Default.ArrowDropDown,
-                    contentDescription = "Selecionar localização",
-                    tint = Color(0xFFFEF7FF),
-                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -124,28 +109,6 @@ fun FeedScreen(
 
         Spacer(Modifier.height(16.dp))
 
-
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            itemsIndexed(categorias) { idx, categoria ->
-                val selected = idx == categoriaSelecionada
-                AssistChip(
-                    onClick = { categoriaSelecionada = idx },
-                    label = { Text(categoria) },
-                    modifier = Modifier,
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = if (selected) Color(0xFFFFCC00) else Color.Transparent,
-                        labelColor = if (selected) Color(0xFF090040) else Color.White
-                    )
-                )
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -162,12 +125,18 @@ fun FeedScreen(
                 }
             }
 
-            items(eventosFiltrados) { evento ->
-                EventoCard(
-                    evento = evento, 
-                    onClick = { onEventoClick(evento) },
-                    checkinsSalvosViewModel = checkinsSalvosViewModel
-                )
+            if (eventosFiltrados.isEmpty()) {
+                items(5) {
+                    ShimmerEventoCard()
+                }
+            } else {
+                items(eventosFiltrados) { evento ->
+                    EventoCard(
+                        evento = evento,
+                        onClick = { onEventoClick(evento) },
+                        checkinsSalvosViewModel = checkinsSalvosViewModel
+                    )
+                }
             }
         }
     }
@@ -175,13 +144,13 @@ fun FeedScreen(
 
 @Composable
 private fun EventoCard(
-    evento: Evento, 
+    evento: Evento,
     onClick: () -> Unit,
     checkinsSalvosViewModel: CheckinsSalvosViewModel
 ) {
     val checkinsSalvos by checkinsSalvosViewModel.checkinsSalvos.collectAsState()
     val isFavorito = checkinsSalvos.any { it.eventoId == evento.id }
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -196,43 +165,29 @@ private fun EventoCard(
         ) {
             Box(
                 modifier = Modifier
-                    .width(90.dp)
+                    .width(120.dp)
                     .fillMaxHeight()
-                    .background(
-                        Color(0xFFE8E8E8),
-                        RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
-                    )
-                    .padding(16.dp)
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(
+                if (!evento.imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = evento.imageUrl,
+                        contentDescription = evento.nome,
                         modifier = Modifier
-                            .size(20.dp)
-                            .background(Color(0xFFB8B8B8), CircleShape)
+                            .fillMaxHeight()
+                            .width(120.dp)
+                            .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)),
+                        contentScale = ContentScale.Crop
                     )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(14.dp)
-                                .background(Color(0xFFB8B8B8), CircleShape)
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .width(18.dp)
-                                .height(14.dp)
-                                .background(Color(0xFFB8B8B8), RoundedCornerShape(3.dp))
-                        )
-                    }
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.event_placeholder),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(120.dp)
+                            .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)),
+                        contentScale = ContentScale.Crop
+                    )
                 }
             }
 
@@ -257,7 +212,7 @@ private fun EventoCard(
                             modifier = Modifier.weight(1f),
                             maxLines = 1
                         )
-                        
+
                         IconButton(
                             onClick = { checkinsSalvosViewModel.toggleSalvarCheckin(evento.id) },
                             modifier = Modifier.size(20.dp)
@@ -341,6 +296,76 @@ private fun EventoCard(
                             fontSize = 11.sp
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShimmerEventoCard() {
+    val transition = rememberInfiniteTransition()
+    val translateAnim by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 1000))
+    )
+    val brush = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFF5B3F9A).copy(alpha = 0.55f),
+            Color(0xFF7B63C9).copy(alpha = 0.55f),
+            Color(0xFF5B3F9A).copy(alpha = 0.55f)
+        ),
+        start = Offset(translateAnim, 0f),
+        end = Offset(translateAnim + 200f, 200f)
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(130.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
+                    .background(brush)
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(20.dp)
+                    .background(brush, RoundedCornerShape(6.dp))
+                )
+                Box(modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(14.dp)
+                    .background(brush, RoundedCornerShape(6.dp))
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier
+                        .width(70.dp)
+                        .height(28.dp)
+                        .background(brush, RoundedCornerShape(6.dp))
+                    )
+                    Box(modifier = Modifier
+                        .width(80.dp)
+                        .height(28.dp)
+                        .background(brush, RoundedCornerShape(6.dp))
+                    )
                 }
             }
         }

@@ -8,15 +8,22 @@ import java.util.Locale
 data class Evento(
     val id: Int,
     val nome: String,
-    val horario: String,
     val local: String,
+    val horario: String,
     val checkIns: Int,
-    val nota: Double? = null,
-    val pago: Boolean = true,
+    val paid: Boolean = false,
+    val pago: Boolean,
     val preco: Double? = null,
     val descricao: String? = null,
     val estabelecimentoId: Int? = null,
-    val estabelecimentoNome: String? = null
+    val estabelecimentoNome: String? = null,
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val cupomTitulo: String? = null,
+    val cupomDescricao: String? = null,
+    val cupomCheckinsNecessarios: Int = 1,
+    val paymentLink: String? = null,
+    val imageUrl: String? = null
 ) {
     fun getPrecoFormatado(): String {
         return if (pago && preco != null) {

@@ -5,6 +5,7 @@ import com.example.projetorole.backend.routes.configureAuthRoutes
 import com.example.projetorole.backend.routes.configureCupomRoutes
 import com.example.projetorole.backend.routes.configureEstabelecimentoAuthRoutes
 import com.example.projetorole.backend.routes.configureEventoRoutes
+import com.example.projetorole.backend.routes.configureCheckinRoutes
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -16,6 +17,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import io.ktor.server.http.content.files
+import io.ktor.server.http.content.static
 import kotlinx.serialization.json.Json
 
 
@@ -52,9 +55,14 @@ fun Application.module() {
             )
         }
 
+        static("/uploads") {
+            files("uploads")
+        }
+
         configureAuthRoutes()
         configureEstabelecimentoAuthRoutes()
         configureEventoRoutes()
         configureCupomRoutes()
+        configureCheckinRoutes()
     }
 }

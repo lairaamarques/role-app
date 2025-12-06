@@ -1,7 +1,7 @@
 package com.example.projetorole.backend.database
 
 import com.example.projetorole.backend.models.CheckIns
-import com.example.projetorole.backend.models.CuponsTable
+import com.example.projetorole.backend.models.CuponsUsuario
 import com.example.projetorole.backend.models.EstabelecimentosTable
 import com.example.projetorole.backend.models.EventosTable
 import com.example.projetorole.backend.models.Users
@@ -21,11 +21,11 @@ object DatabaseFactory {
         Database.connect(dataSource)
         transaction {
             SchemaUtils.createMissingTablesAndColumns(
+                Users,
                 EstabelecimentosTable,
                 EventosTable,
-                CuponsTable,
-                Users,
-                CheckIns
+                CheckIns,
+                CuponsUsuario
             )
         }
         seedDefaultEstabelecimento()
